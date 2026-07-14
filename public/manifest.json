@@ -1,0 +1,10 @@
+{
+  "name": "FieldService Pro",
+  "short_name": "FS Pro",
+  "description": "Real estate field service management",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2563eb",
+  "icons": []
+}

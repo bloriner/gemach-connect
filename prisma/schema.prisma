@@ -1,0 +1,210 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  password  String?
+  role      String   @default("CREW_MEMBER") // ADMIN, OFFICE_STAFF, CREW_LEAD, CREW_MEMBER
+  phone     String?
+  avatarUrl String?
+  active    Boolean  @default(true)
+  crewId    String?
+  crew      Crew?    @relation(fields: [crewId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  timeEntries  TimeEntry[]
+  fieldNotes   FieldNote[]
+  ledCrews     Crew[]       @relation("CrewLead")
+  createdOrders WorkOrder[] @relation("OrderCreator")
+  expenses     Expense[]
+}
+
+model Crew {
+  id          String   @id @default(cuid())
+  name        String
+  vehicleInfo String?
+  leadId      String?
+  lead        User?    @relation("CrewLead", fields: [leadId], references: [id])
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  members    User[]      @relation()
+  workOrders WorkOrder[]
+}
+
+model Customer {
+  id             String   @id @default(cuid())
+  companyName    String
+  contactName    String?
+  email          String?
+  phone          String?
+  billingAddress String?
+  notes          String?
+  portalToken    String?  @unique
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  properties Property[]
+  orders     WorkOrder[]
+  invoices   Invoice[]
+}
+
+model Expense {
+  id          String   @id @default(cuid())
+  description String
+  category    String   // MATERIALS, LABOR, FUEL, EQUIPMENT, SOFTWARE, TRAVEL, OTHER
+  amount      Float
+  vendor      String?
+  receiptUrl  String?
+  workOrderId String?
+  workOrder   WorkOrder? @relation(fields: [workOrderId], references: [id])
+  createdById String
+  createdBy   User      @relation(fields: [createdById], references: [id])
+  date        DateTime  @default(now())
+  notes       String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Property {
+  id          String   @id @default(cuid())
+  customerId  String
+  customer    Customer @relation(fields: [customerId], references: [id])
+  name        String
+  address     String
+  city        String?
+  state       String   @default("MI")
+  zipCode     String?
+  lat         Float?
+  lng         Float?
+  accessNotes String?
+  gateCode    String?
+  photos      String?  // JSON array of URLs
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  orders WorkOrder[]
+}
+
+model ServiceType {
+  id                String   @id @default(cuid())
+  name              String
+  description       String?
+  basePrice         Float?
+  checklistTemplate String?  // JSON array of checklist items
+  active            Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  orders WorkOrder[]
+}
+
+model WorkOrder {
+  id            String    @id @default(cuid())
+  orderNumber   String    @unique
+  status        String    @default("PENDING") // PENDING, DISPATCHED, EN_ROUTE, ON_SITE, COMPLETED, INVOICED, CANCELLED
+  priority      String    @default("NORMAL") // LOW, NORMAL, HIGH, URGENT
+  scheduledDate DateTime?
+  dueDate       DateTime?
+  notes         String?
+  customerId    String
+  customer      Customer  @relation(fields: [customerId], references: [id])
+  propertyId    String
+  property      Property  @relation(fields: [propertyId], references: [id])
+  serviceTypeId String
+  serviceType   ServiceType @relation(fields: [serviceTypeId], references: [id])
+  crewId        String?
+  crew          Crew?     @relation(fields: [crewId], references: [id])
+  createdById   String
+  createdBy     User      @relation("OrderCreator", fields: [createdById], references: [id])
+  price         Float?
+  completedAt   DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  timeEntries TimeEntry[]
+  fieldNotes  FieldNote[]
+  invoice     Invoice?
+  expenses    Expense[]
+}
+
+model TimeEntry {
+  id          String    @id @default(cuid())
+  workOrderId String
+  workOrder   WorkOrder @relation(fields: [workOrderId], references: [id])
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+  type        String    // ARRIVAL, DEPARTURE, BREAK_START, BREAK_END
+  timestamp   DateTime  @default(now())
+  lat         Float?
+  lng         Float?
+  notes       String?
+  createdAt   DateTime  @default(now())
+}
+
+model FieldNote {
+  id          String    @id @default(cuid())
+  workOrderId String
+  workOrder   WorkOrder @relation(fields: [workOrderId], references: [id])
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+  type        String    @default("NOTE") // NOTE, PHOTO, ISSUE, SIGNATURE
+  content     String?
+  photoUrls   String?   // JSON array of URLs
+  createdAt   DateTime  @default(now())
+}
+
+model Invoice {
+  id          String    @id @default(cuid())
+  invoiceNumber String  @unique
+  workOrderId String    @unique
+  workOrder   WorkOrder @relation(fields: [workOrderId], references: [id])
+  customerId  String
+  customer    Customer  @relation(fields: [customerId], references: [id])
+  status      String    @default("DRAFT") // DRAFT, SENT, PAID, OVERDUE, CANCELLED
+  subtotal    Float     @default(0)
+  taxRate     Float     @default(6.0)
+  taxAmount   Float     @default(0)
+  total       Float     @default(0)
+  notes       String?
+  dueDate     DateTime?
+  sentAt      DateTime?
+  paidAt      DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  items    InvoiceItem[]
+  payments Payment[]
+}
+
+model InvoiceItem {
+  id          String  @id @default(cuid())
+  invoiceId   String
+  invoice     Invoice @relation(fields: [invoiceId], references: [id])
+  description String
+  quantity    Float   @default(1)
+  unitPrice   Float   @default(0)
+  total       Float   @default(0)
+}
+
+model Payment {
+  id          String   @id @default(cuid())
+  invoiceId   String
+  invoice     Invoice  @relation(fields: [invoiceId], references: [id])
+  amount      Float
+  method      String   // CASH, CHECK, CREDIT_CARD, ACH, OTHER
+  reference   String?
+  notes       String?
+  receivedAt  DateTime @default(now())
+  createdAt   DateTime @default(now())
+}
