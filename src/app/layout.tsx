@@ -4,7 +4,6 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "FieldService Pro",
   description: "Real estate field service management",
-  manifest: "/manifest.json",
 };
 
 export default function RootLayout({
