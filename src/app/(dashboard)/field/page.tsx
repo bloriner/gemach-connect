@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { prisma } from "@/lib/prisma";
-import { Clock } from "lucide-react";
+
 
 export default async function FieldPage() {
   const activeOrders = await prisma.workOrder.findMany({
@@ -65,7 +65,7 @@ export default async function FieldPage() {
                     {order.serviceType.name}
                   </span>
                 </div>
-                <Button size="sm" variant="primary">
+                <Button size="sm" variant="primary" disabled title="Coming soon">
                   Complete Job
                 </Button>
               </CardContent>

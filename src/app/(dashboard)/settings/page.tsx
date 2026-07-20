@@ -26,7 +26,7 @@ export default function SettingsPage() {
           <Input label="Address" id="address" defaultValue="123 Business Park Dr, Detroit, MI 48201" />
           <Input label="Tax Rate (%)" id="taxRate" type="number" defaultValue="6.0" />
           <div className="pt-2">
-            <Button>Save Changes</Button>
+            <Button disabled title="Coming soon — settings persistence not yet implemented">Save Changes</Button>
           </div>
         </CardContent>
       </Card>

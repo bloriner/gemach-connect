@@ -134,7 +134,7 @@ export default async function PortalDashboardPage({
                           {order.serviceType.name}
                         </p>
                         <p className="text-xs text-slate-500">
-                          {order.property.name} &mdash; {order.property.address}
+                          {order.property.name} — {order.property.address}
                         </p>
                       </div>
                       <span
@@ -187,7 +187,7 @@ export default async function PortalDashboardPage({
                             {invoice.invoiceNumber}
                           </p>
                           <p className="text-xs text-slate-500">
-                            {invoice.workOrder.serviceType.name} &mdash; {formatDate(invoice.createdAt)}
+                            {invoice.workOrder.serviceType.name} — {formatDate(invoice.createdAt)}
                           </p>
                         </div>
                         <Badge variant={statusVariant(invoice.status)}>{invoice.status}</Badge>

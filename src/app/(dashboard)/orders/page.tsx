@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { prisma } from "@/lib/prisma";
-import { ORDER_STATUS_COLORS, type OrderStatus } from "@/lib/utils";
+import { ORDER_STATUS_COLORS, type OrderStatus, formatCurrency } from "@/lib/utils";
 import { Plus } from "lucide-react";
 
 export default async function OrdersPage() {
@@ -25,7 +25,7 @@ export default async function OrdersPage() {
             {orders.length} orders total
           </p>
         </div>
-        <Button>
+        <Button disabled title="Coming soon — use Prisma Studio or seed data to create orders">
           <Plus className="mr-2 h-4 w-4" />
           New Order
         </Button>
@@ -80,7 +80,7 @@ export default async function OrdersPage() {
                       </Badge>
                     </td>
                     <td className="px-6 py-4 text-slate-900">
-                      ${order.price?.toFixed(2) ?? "—"}
+                      {order.price != null ? formatCurrency(order.price) : "—"}
                     </td>
                   </tr>
                 ))}

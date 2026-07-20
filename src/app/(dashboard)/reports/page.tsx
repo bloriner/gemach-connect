@@ -7,9 +7,6 @@ export default async function ReportsPage() {
   const now = new Date();
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
   const yearStart = new Date(now.getFullYear(), 0, 1);
-  const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-  const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
-
   // Revenue by customer
   const revenueByCustomer = await prisma.invoice.groupBy({
     by: ["customerId"],

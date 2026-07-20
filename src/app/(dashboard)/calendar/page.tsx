@@ -103,13 +103,13 @@ export default async function CalendarPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" disabled title="Month navigation coming soon">
             <ChevronLeft className="h-4 w-4" />
           </Button>
           <span className="text-sm font-medium text-slate-900 min-w-[140px] text-center">
             {monthLabel}
           </span>
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" disabled title="Month navigation coming soon">
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>

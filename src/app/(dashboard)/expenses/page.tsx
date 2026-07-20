@@ -63,11 +63,11 @@ export default async function ExpensesPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline">
+          <Button variant="outline" disabled title="Coming soon">
             <Filter className="mr-2 h-4 w-4" />
             Filter
           </Button>
-          <Button>
+          <Button disabled title="Coming soon — use Prisma Studio or seed data to add expenses">
             <DollarSign className="mr-2 h-4 w-4" />
             Add Expense
           </Button>

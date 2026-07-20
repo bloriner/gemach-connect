@@ -12,12 +12,19 @@ import {
 } from "lucide-react";
 
 export default async function DashboardPage() {
+  const now = new Date();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
+
   const [orderCount, crewCount, completedToday, revenueMonth, recentOrders, activeOrders] =
     await Promise.all([
       prisma.workOrder.count(),
       prisma.crew.count(),
       prisma.workOrder.count({
-        where: { status: "COMPLETED" },
+        where: {
+          status: "COMPLETED",
+          completedAt: { gte: todayStart, lte: todayEnd },
+        },
       }),
       prisma.invoice.aggregate({
         _sum: { total: true },
@@ -186,18 +193,18 @@ export default async function DashboardPage() {
         <CardContent>
           <div className="flex flex-wrap gap-3">
             <a
-              href="/orders/new"
+              href="/orders"
               className="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
             >
               <ClipboardList className="h-4 w-4" />
-              New Work Order
+              View Work Orders
             </a>
             <a
-              href="/invoicing/new"
+              href="/invoicing"
               className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
             >
               <DollarSign className="h-4 w-4" />
-              Generate Invoice
+              View Invoices
             </a>
             <a
               href="/crews"

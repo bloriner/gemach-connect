@@ -21,7 +21,7 @@ export default function PortalLandingPage() {
           <h2 className="text-lg font-semibold text-slate-900">Sign In</h2>
         </CardHeader>
         <CardContent>
-          <form action="/portal/dashboard" method="GET" className="space-y-4">
+          <form action="/portal/dashboard" method="GET" className="space-y-4" rel="noreferrer">
             <div>
               <label htmlFor="token" className="block text-sm font-medium text-slate-700 mb-1">
                 Portal Access Token
@@ -32,9 +32,13 @@ export default function PortalLandingPage() {
                 placeholder="Enter your access token..."
                 required
                 className="font-mono"
+                autoComplete="off"
               />
               <p className="mt-1 text-xs text-slate-400">
                 Your token can be found on any invoice or provided by our office.
+              </p>
+              <p className="mt-1 text-xs text-amber-500">
+                Demo only — tokens are not encrypted in transit. Production portals should use session-based authentication.
               </p>
             </div>
             <Button type="submit" className="w-full">

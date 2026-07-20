@@ -56,7 +56,7 @@ export default async function InvoicingPage() {
             {invoices.length} invoices — {completedOrders.length} orders ready for invoicing
           </p>
         </div>
-        <Button>
+        <Button disabled title="Coming soon — invoices are created from completed orders">
           <Plus className="mr-2 h-4 w-4" />
           New Invoice
         </Button>
@@ -137,7 +137,7 @@ export default async function InvoicingPage() {
                     <span className="text-sm font-medium text-slate-900">
                       ${order.price?.toFixed(2) ?? "—"}
                     </span>
-                    <Button size="sm">
+                    <Button size="sm" disabled title="Coming soon — generate invoices from completed orders">
                       <FileText className="mr-1.5 h-3.5 w-3.5" />
                       Generate Invoice
                     </Button>
