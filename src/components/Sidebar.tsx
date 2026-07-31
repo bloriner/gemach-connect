@@ -16,6 +16,7 @@ import {
   Shield,
   Map,
   Gift,
+  Lightbulb,
 } from "lucide-react";
 
 const navItems = [
@@ -28,6 +29,7 @@ const navItems = [
   { href: "/dashboard/requests", label: "Requests", icon: Package },
   { href: "/dashboard/messages", label: "Messages", icon: MessageSquare },
   { href: "/dashboard/saved", label: "Saved", icon: Bookmark },
+  { href: "/dashboard/suggestions", label: "Suggestions", icon: Lightbulb },
   { href: "/dashboard/profile", label: "Profile", icon: User },
   { href: "/admin", label: "Admin", icon: Shield },
 ];

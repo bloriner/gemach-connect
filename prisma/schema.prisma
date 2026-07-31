@@ -23,6 +23,7 @@ model User {
   offers          Offer[]        @relation("donor")
   messages        Message[]
   favorites       Favorite[]
+  suggestions     Suggestion[]
   threadsAsUser   Thread[]       @relation("threadUser")
   threadsAsOwner  Thread[]       @relation("threadOwner")
 }
@@ -114,6 +115,19 @@ model ThreadRead {
   thread Thread @relation(fields: [threadId], references: [id], onDelete: Cascade)
 
   @@id([threadId, userId])
+}
+
+model Suggestion {
+  id        String   @id @default(cuid())
+  title     String
+  body      String
+  category  String   @default("general")
+  userId    String
+  userEmail String
+  userName  String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Favorite {
