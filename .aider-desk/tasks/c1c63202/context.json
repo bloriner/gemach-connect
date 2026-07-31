@@ -1,0 +1,1496 @@
+{
+  "version": 2,
+  "contextMessages": [
+    {
+      "id": "aaba59a0-57fa-4e5f-b723-5a5b298285ac",
+      "role": "user",
+      "content": "i made a project  tosfos-shabbos-zechus-board    can you find it on my computer?",
+      "promptContext": {
+        "id": "aaba59a0-57fa-4e5f-b723-5a5b298285ac"
+      },
+      "timestamp": 1784586881391
+    },
+    {
+      "role": "assistant",
+      "content": "### **Conversation Summary**\n\n#### **Primary Request and Intent**\nThe user is developing \"Tosfos Shabbos Zechus Board\" — a Next.js pledge board at `C:\\Users\\Boruch\\tosfos-shabbos-zechus-board`, deployed to `shabboshemeilizok.com` via Vercel. This session covered four sequential fixes: (1) missing `dir=\"rtl\"` on Hebrew text in several components, (2) securing `GET /api/pledges` behind a gate token so wall data isn't publicly accessible, (3) fixing backwards Hebrew in the OpenGraph share preview image, and (4) adding a Hebrew/English language toggle for the name field with `dir=\"auto\"` on all name displays.\n\n#### **Key Technical Concepts**\n- Next.js 14.2.35 (App Router), React client components, Vercel CLI deployment\n- Supabase backend, HMAC-signed session tokens (`crypto.createHmac`)\n- `@vercel/og` / Satori for OG image generation — satori doesn't respect `direction: rtl`, requires string reversal\n- CSS `direction: rtl` vs HTML `dir=\"auto\"` attribute for bidirectional text\n- `sessionStorage` for client-side token persistence\n\n#### **All User Messages**\n1. \"i sent someone the link... and i see that the hebrew is backwards....\"\n2. \"its still not super secure. b/c everything is in the code... to properly fix you need to deliver the content only after the api call comes back green\"\n3. \"Proceed.\" (gate token implementation)\n4. \"when i post a link for the website it shows the hebrew of tosfos shabbos backwards. i put a picture labled onegraph-image in the public folder for you to see what i mean\"\n5. \"when putting in a name on the board. it should probably just be an option of all english or all hebrew......its getting confused...when i put in a name it makes an apostrohe and then the second is bold...and backwards in the other language.......\"\n6. \"Proceed.\" (language toggle implementation)\n\n#### **Files and Code Sections**\n\n- **`components/RotatingSaying.js`**\n    - **Importance:** Shows rotating Hebrew sayings prominently on the page — was missing `dir=\"rtl\"`.\n    - **Changes:** Added `dir=\"rtl\" lang=\"he\"` to `<div className=\"he\">`.\n\n- **`components/NamesCard.js`**\n    - **Importance:** Printable list of names to daven for — Tehillim line was missing `dir=\"rtl\"`.\n    - **Changes:** Added `dir=\"rtl\"` to `<span className=\"nc-teh\">`. Later changed both `nc-name` spans from `dir=\"rtl\"` to `dir=\"auto\"`.\n\n- **`components/MiShebeirach.js`**\n    - **Importance:** Mi Shebeirach prayer display — perek links (`קאפיטל {n}`) missing `dir=\"rtl\"`.\n    - **Changes:** Added `dir=\"rtl\"` to perek `<a>` links.\n\n- **`app/globals.css`**\n    - **Importance:** All site-wide styles.\n    - **Changes (round 1):** Added `direction: rtl` to `.door-lintel`.\n    - **Changes (round 2):** Removed `direction: rtl` from `.card .name`, `.print-card .pc-name`, `.names-card .nc-name`, `.sp-name` — now relying on `dir=\"auto\"` HTML attribute.\n\n- **`lib/gate-token.js`** (NEW)\n    - **Importance:** HMAC-signed session token for securing wall data API.\n    - **Code:**\n      ```js\n      import crypto from 'crypto';\n      import { COMMUNITY_CODE } from '@/lib/pledges';\n      const SECRET = process.env.GATE_TOKEN_SECRET || COMMUNITY_CODE;\n      const TTL = 24 * 60 * 60 * 1000;\n\n      export function createGateToken() {\n        const exp = Date.now() + TTL;\n        const payload = JSON.stringify({ exp });\n        const hmac = crypto.createHmac('sha256', SECRET).update(payload).digest('hex');\n        return Buffer.from(JSON.stringify({ p: payload, h: hmac })).toString('base64url');\n      }\n\n      export function verifyGateToken(token) {\n        if (!token || typeof token !== 'string') return false;\n        try {\n          const { p, h } = JSON.parse(Buffer.from(token, 'base64url').toString('utf-8'));\n          const expectedHmac = crypto.createHmac('sha256', SECRET).update(p).digest('hex');\n          if (h !== expectedHmac) return false;\n          const { exp } = JSON.parse(p);\n          if (!exp || Date.now() > exp) return false;\n          return true;\n        } catch { return false; }\n      }\n      ```\n\n- **`app/api/gate/route.js`**\n    - **Importance:** Server-side community code validation.\n    - **Changes:** Now imports `createGateToken` and returns `{ ok: true, token }` on success.\n\n- **`app/api/pledges/route.js`**\n    - **Importance:** Wall data endpoint — was publicly accessible.\n    - **Changes:** `GET` now extracts `Authorization: Bearer <token>`, calls `verifyGateToken()`, returns 401 if invalid.\n\n- **`app/page.js`**\n    - **Importance:** Main application page — gate, form, wall.\n    - **Changes (gate token):** `submitGate` stores `data.token` in `sessionStorage`; `loadWall` sends `Authorization: Bearer <token>` header.\n    - **Changes (language toggle):**\n        - Added `const [nameLang, setNameLang] = useState('he');`\n        - Added עברית/English segment toggle above name input\n        - Name input: `dir` and `className` and `placeholder` follow `nameLang`\n        - Hebrew keyboard only shown when `nameLang === 'he'`\n        - Name preview `dir` follows `nameLang`\n        - WallCard: `<div className=\"name\" dir=\"auto\">`\n        - Spotlight: `<div className=\"sp-name\" dir=\"auto\">`\n\n- **`components/PrintCard.js`**\n    - **Importance:** Printable card shown after successful pledge.\n    - **Changes:** `<div className=\"pc-name\" dir=\"auto\">` (was `dir=\"rtl\"`).\n\n- **`app/opengraph-image.js`**\n    - **Importance:** Dynamic OG share image generated by `@vercel/og`/Satori.\n    - **Changes:** Added `rtl()` helper that reverses Hebrew strings for Satori (which doesn't respect `direction: rtl`). Changed `תוספת שבת` to `{rtl('תוספת שבת')}`.\n\n- **`public/opengraph-image.png`** (DELETED)\n    - **Importance:** User's screenshot was overriding the dynamic OG image generator.\n    - **Changes:** Removed.\n\n#### **Errors and Fixes**\n\n- **Error:** Hebrew appeared backwards on the live site.\n    - **Fix:** Added `dir=\"rtl\"` to RotatingSaying.js, NamesCard.js (Tehillim line), MiShebeirach.js (perek links), and `direction: rtl` to `.door-lintel` CSS. Deployed.\n\n- **Error:** `/api/pledges` returned wall data to anyone without authentication — \"everything is in the code... you need to deliver the content only after the api call comes back green.\"\n    - **Fix:** Created `lib/gate-token.js` with HMAC-signed tokens (24h expiry). Updated `/api/gate` to return token, `/api/pledges` GET to require `Authorization: Bearer <token>`. Verified 401 on direct access.\n\n- **Error:** OpenGraph share preview showed Hebrew `תוספת שבת` backwards — Satori doesn't respect `direction: rtl`.\n    - **Fix:** Added `rtl()` string reversal function in `app/opengraph-image.js` and wrapped Hebrew text. Removed static `public/opengraph-image.png` screenshot that was overriding the dynamic image.\n\n- **User Feedback:** \"when putting in a name on the board. it should probably just be an option of all english or all hebrew......its getting confused...when i put in a name it makes an apostrohe and then the second is bold...and backwards in the other language\"\n    - **Fix:** Added עברית/English language toggle for name field. Name input `dir`, `placeholder`, `className`, and keyboard toggle follow selection. All name displays changed from hardcoded `dir=\"rtl\"` to `dir=\"auto\"` (WallCard, PrintCard, NamesCard, spotlight). Removed `direction: rtl` from corresponding CSS rules.\n\n#### **Current Work and Next Step**\n\n**Current Work:**\nThe language toggle + `dir=\"auto\"` changes are fully coded across 6 files (`app/page.js`, `components/PrintCard.js`, `components/NamesCard.js`, `app/globals.css`) but **not yet deployed**. The todo list has \"Build, commit, deploy\" as the remaining unchecked item.\n\n**Next Step:**\nRun `npx vercel --prod --yes` to deploy the language toggle and `dir=\"auto\"` changes to `https://shabboshemeilizok.com`.",
+      "id": "f1d1db98-79df-447e-9616-6d0a75ae22c2",
+      "usageReport": {
+        "model": "deepseek/deepseek-v4-pro",
+        "sentTokens": 95528,
+        "receivedTokens": 2784,
+        "cacheReadTokens": 3200,
+        "messageCost": 0.043988360000000004,
+        "agentTotalCost": 0.6799807769999999
+      },
+      "promptContext": {
+        "id": "99ddb112-92c1-4bfc-8e70-713b6b520714"
+      },
+      "timestamp": 1784602289373
+    },
+    {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "reasoning",
+          "text": "The user wants me to proceed with the deployment of the language toggle and `dir=\"auto\"` changes. Let me check the todo list first, then build and deploy to Vercel."
+        },
+        {
+          "type": "tool-call",
+          "toolCallId": "call_00_4ZDp8wFhHxIMGDhJMiH99744",
+          "toolName": "todo---get_items",
+          "input": {}
+        }
+      ],
+      "id": "d34c4ea4-ae13-4b3c-9b06-d2794d2c3836",
+      "usageReport": {
+        "model": "deepseek/deepseek-v4-pro",
+        "sentTokens": 2049,
+        "receivedTokens": 69,
+        "cacheReadTokens": 9472,
+        "messageCost": 0.000985681,
+        "agentTotalCost": 0.6809664579999999
+      },
+      "promptContext": {
+        "id": "99ddb112-92c1-4bfc-8e70-713b6b520714"
+      },
+      "timestamp": 1784602291973
+    },
+    {
+      "role": "tool",
+      "content": [
+        {
+          "type": "tool-result",
+          "toolCallId": "call_00_4ZDp8wFhHxIMGDhJMiH99744",
+          "toolName": "todo---get_items",
+          "output": {
+            "type": "json",
+            "value": {
+              "initialUserPrompt": "Add Hebrew/English language toggle for name field, use dir=auto on displays",
+              "items": [
+                {
+                  "name": "Add nameLang state and עברית/English toggle to form",
+                  "completed": false
+                },
+                {
+                  "name": "Make name input dir, placeholder, keyboard follow toggle",
+                  "completed": false
+                },
+                {
+                  "name": "Update name preview dir to follow language",
+                  "completed": false
+                },
+                {
+                  "name": "Change WallCard, PrintCard, NamesCard, spotlight to dir=auto",
+                  "completed": false
+                },
+                {
+                  "name": "Build, commit, deploy",
+                  "completed": false
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "id": "6a55fa4d-2415-4441-8597-0e2110138eb2",
+      "promptContext": {
+        "id": "99ddb112-92c1-4bfc-8e70-713b6b520714"
+      },
+      "timestamp": 1784602291973
+    },
+    {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "reasoning",
+          "text": "The user said \"Proceed.\" — they want me to deploy the changes. Let me first check the current state of the files to see if the changes are already in place. Based on the summary, the changes were coded but not deployed. Let me verify the files are in the correct state, then build and deploy.\n\nLet me first check the project location - the summary says `C:\\Users\\Boruch\\tosfos-shabbos-zechus-board`. Let me verify the changes are there."
+        },
+        {
+          "type": "text",
+          "text": "Let me first verify the changes are in place, then build and deploy."
+        },
+        {
+          "type": "tool-call",
+          "toolCallId": "call_00_TKEMlvCh2BrsfAMfLFgZ0689",
+          "toolName": "power---grep",
+          "input": {
+            "filePattern": "app/page.js",
+            "searchTerm": "nameLang",
+            "contextLines": 0,
+            "caseSensitive": false,
+            "maxResults": 50
+          }
+        },
+        {
+          "type": "tool-call",
+          "toolCallId": "call_01_zYboJXzaMBufS4DwFShu4319",
+          "toolName": "power---grep",
+          "input": {
+            "filePattern": "components/PrintCard.js",
+            "searchTerm": "dir=\"auto\"",
+            "contextLines": 0,
+            "caseSensitive": false,
+            "maxResults": 50
+          }
+        },
+        {
+          "type": "tool-call",
+          "toolCallId": "call_02_hWxayOfBk1F89EKO5IhR4060",
+          "toolName": "power---grep",
+          "input": {
+            "filePattern": "app/globals.css",
+            "searchTerm": "direction: rtl",
+            "contextLines": 0,
+            "caseSensitive": false,
+            "maxResults": 50
+          }
+        }
+      ],
+      "id": "f6c77642-c7b3-4845-b9d4-bc8faf0eac03",
+      "usageReport": {
+        "model": "deepseek/deepseek-v4-pro",
+        "sentTokens": 192,
+        "receivedTokens": 394,
+        "cacheReadTokens": 11520,
+        "messageCost": 0.00046806,
+        "agentTotalCost": 0.6814345179999999
+      },
+      "promptContext": {
+        "id": "99ddb112-92c1-4bfc-8e70-713b6b520714"
+      },
+      "timestamp": 1784602297724
+    },
+    {
+      "role": "tool",
+      "content": [
+        {
+          "type": "tool-result",
+          "toolCallId": "call_00_TKEMlvCh2BrsfAMfLFgZ0689",
+          "toolName": "power---grep",
+          "output": {
+            "type": "text",
+            "value": "No matches found for pattern 'nameLang' in files matching 'app/page.js'."
+          }
+        },
+        {
+          "type": "tool-result",
+          "toolCallId": "call_01_zYboJXzaMBufS4DwFShu4319",
+          "toolName": "power---grep",
+          "output": {
+            "type": "text",
+            "value": "No matches found for pattern 'dir=\"auto\"' in files matching 'components/PrintCard.js'."
+          }
+        },
+        {
+          "type": "tool-result",
+          "toolCallId": "call_02_hWxayOfBk1F89EKO5IhR4060",
+          "toolName": "power---grep",
+          "output": {
+            "type": "text",
+            "value": "No matches found for pattern 'direction: rtl' in files matching 'app/globals.css'."
+          }
+        }
+      ],
+      "id": "8e50111e-3f5e-4b28-9e5b-c494487bc319",
+      "promptContext": {
+        "id": "99ddb112-92c1-4bfc-8e70-713b6b520714"
+      },
+      "timestamp": 1784602297724
+    },
+    {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "reasoning",
+          "text": "The grep didn't find the changes. The project is at `C:\\Users\\Boruch\\tosfos-shabbos-zechus-board`, but the tool searches within `<WorkingDirectory>` which is `C:\\Users\\Boruch\\Desktop\\RESP`. Let me check the correct path."
+        },
+        {
+          "type": "text",
+          "text": "The project is at `C:\\Users\\Boruch\\tosfos-shabbos-zechus-board`, outside the working directory. Let me check there."
+        },
+        {
+          "type": "tool-call",
+          "toolCallId": "call_00_mRflzfzieIgDZKm4iCni5541",
+          "toolName": "power---grep",
+          "input": {
+            "filePattern": "app/page.js",
+            "searchTerm": "nameLang",
+            "contextLines": 0,
+            "caseSensitive": false,
+            "maxResults": 10
+          }
+        },
+        {
+          "type": "tool-call",
+          "toolCallId": "call_01_mqszNGakZxayITebgbSb4667",
+          "toolName": "power---grep",
+          "input": {
+            "filePattern": "components/PrintCard.js",
+            "searchTerm": "dir=",
+            "contextLines": 0,
+            "caseSensitive": false,
+            "maxResults": 10
+          }
+        },
+        {
+          "type": "tool-call",
+          "toolCallId": "call_02_9RUOMFTU8Ge1jcbGhG4x7287",
+          "toolName": "power---grep",
+          "input": {
+            "filePattern": "app/globals.css",
+            "searchTerm": "direction",
+            "contextLines": 0,
+            "caseSensitive": false,
+            "maxResults": 20
+          }
+        }
+      ],
+      "id": "83e5308e-59ff-4512-8c75-6f79948e5d6d",
+      "usageReport": {
+        "model": "deepseek/deepseek-v4-pro",
+        "sentTokens": 604,
+        "receivedTokens": 420,
+        "cacheReadTokens": 11648,
+        "messageCost": 0.000670364,
+        "agentTotalCost": 0.6821048819999999
+      },
+      "promptContext": {
+        "id": "99ddb112-92c1-4bfc-8e70-713b6b520714"
+      },
+      "timestamp": 1784602303570
+    },
+    {
+      "role": "tool",
+      "content": [
+        {
+          "type": "tool-result",
+          "toolCallId": "call_00_mRflzfzieIgDZKm4iCni5541",
+          "toolName": "power---grep",
+          "output": {
+            "type": "text",
+            "value": "No matches found for pattern 'nameLang' in files matching 'app/page.js'."
+          }
+        },
+        {
+          "type": "tool-result",
+          "toolCallId": "call_01_mqszNGakZxayITebgbSb4667",
+          "toolName": "power---grep",
+          "output": {
+            "type": "text",
+            "value": "No matches found for pattern 'dir=' in files matching 'components/PrintCard.js'."
+          }
+        },
+        {
+          "type": "tool-result",
+          "toolCallId": "call_02_9RUOMFTU8Ge1jcbGhG4x7287",
+          "toolName": "power---grep",
+          "output": {
+            "type": "text",
+            "value": "No matches found for pattern 'direction' in files matching 'app/globals.css'."
+          }
+        }
+      ],
+      "id": "745937cd-6a54-47d3-8b9b-31aa55269799",
+      "promptContext": {
+        "id": "99ddb112-92c1-4bfc-8e70-713b6b520714"
+      },
+      "timestamp": 1784602303570
+    },
+    {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "reasoning",
+          "text": "The tools are searching within the working directory `C:\\Users\\Boruch\\Desktop\\RESP`, not in `C:\\Users\\Boruch\\tosfos-shabbos-zechus-board`. Let me use fs-browse-directory to check if the project exists there. Actually, let me also try with absolute paths in the tools."
+        },
+        {
+          "type": "tool-call",
+          "toolCallId": "call_00_JuLlpauxgERtuOYzjkJ45563",
+          "toolName": "fs-browse-directory",
+          "input": {
+            "path": "C:\\Users\\Boruch\\tosfos-shabbos-zechus-board"
+          }
+        }
+      ],
+      "id": "4cbc2abe-12e6-4150-ba92-6f7f76636389",
+      "usageReport": {
+        "model": "deepseek/deepseek-v4-pro",
+        "sentTokens": 599,
+        "receivedTokens": 134,
+        "cacheReadTokens": 12160,
+        "messageCost": 0.00042122500000000006,
+        "agentTotalCost": 0.6825261069999998
+      },
+      "promptContext": {
+        "id": "99ddb112-92c1-4bfc-8e70-713b6b520714"
+      },
+      "timestamp": 1784602306284
+    },
+    {
+      "role": "tool",
+      "content": [
+        {
+          "type": "tool-result",
+          "toolCallId": "call_00_JuLlpauxgERtuOYzjkJ45563",
+          "toolName": "fs-browse-directory",
+          "output": {
+            "type": "json",
+            "value": {
+              "path": "C:\\Users\\Boruch\\tosfos-shabbos-zechus-board",
+              "entries": [
+                {
+                  "name": ".git",
+                  "path": "C:\\Users\\Boruch\\tosfos-shabbos-zechus-board\\.git",
+                  "type": "directory",
+                  "size": 0,
+                  "modifiedTime": "2026-07-21T02:18:59.719Z"
+                },
+                {
+                  "name": ".next",
+                  "path": "C:\\Users\\Boruch\\tosfos-shabbos-zechus-board\\.next",
+                  "type": "directory",
+                  "size": 0,
+                  "modifiedTime": "2026-07-21T02:18:54.648Z"
+                },
+                {
+                  "name": ".vercel",
+                  "path": "C:\\Users\\Boruch\\tosfos-shabbos-zechus-board\\.vercel",
+                  "type": "directory",
+                  "size": 0,
+                  "modifiedTime": "2026-07-19T17:26:15.578Z"
+                },
+                {
+                  "name": "app",
+                  "path": "C:\\Users\\Boruch\\tosfos-shabbos-zechus-board\\app",
+                  "type": "directory",
+                  "size": 0,
+                  "modifiedTime": "2026-07-20T22:27:40.129Z"
+                },
+                {
+                  "name": "components",
+                  "path": "C:\\Users\\Boruch\\tosfos-shabbos-zechus-board\\components",
+                  "type": "directory",
+                  "size": 0,
+                  "modifiedTime": "2026-07-20T22:53:32.321Z"
+                },
+                {
+                  "name": "content",
+                  "path": "C:\\Users\\Boruch\\tosfos-shabbos-zechus-board\\content",
+                  "type": "directory",
+                  "size": 0,
+                  "modifiedTime": "2026-07-20T22:27:11.485Z"
+                },
+                {
+                  "name": "lib",
+                  "path": "C:\\Users\\Boruch\\tosfos-shabbos-zechus-board\\lib",
+                  "type": "directory",
+                  "size": 0,
+                  "modifiedTime": "2026-07-21T02:33:17.409Z"
+                },
+                {
+                  "name": "node_modules",
+                  "path": "C:\\Users\\Boruch\\tosfos-shabbos-zechus-board\\node_modules",
+                  "type": "directory",
+                  "size": 0,
+                  "modifiedTime": "2026-07-19T19:07:56.544Z"
+                },
+                {
+                  "name": "public",
+                  "path": "C:\\Users\\Boruch\\tosfos-shabbos-zechus-board\\public",
+                  "type": "directory",
+                  "size": 0,
+                  "modifiedTime": "2026-07-21T02:37:43.002Z"
+                },
+                {
+                  "name": "scripts",
+                  "path": "C:\\Users\\Boruch\\tosfos-shabbos-zechus-board\\scripts",
+                  "type": "directory",
+                  "size": 0,
+                  "modifiedTime": "2026-07-19T19:01:31.092Z"
+                },
+                {
+                  "name": "supabase",
+                  "path": "C:\\Users\\Boruch\\tosfos-shabbos-zechus-board\\supabase",
+                  "type": "directory",
+                  "size": 0,
+                  "modifiedTime": "2026-07-19T17:02:38.992Z"
+                },
+                {
+                  "name": ".env.local",
+                  "path": "C:\\Users\\Boruch\\tosfos-shabbos-zechus-board\\.env.local",
+                  "type": "file",
+                  "size": 1321,
+                  "modifiedTime": "2026-07-19T17:26:15.927Z"
+                },
+                {
+                  "name": ".env.local.example",
+                  "path": "C:\\Users\\Boruch\\tosfos-shabbos-zechus-board\\.env.local.example",
+                  "type": "file",
+                  "size": 1856,
+                  "modifiedTime": "2026-07-20T02:35:17.192Z"
+                },
+                {
+                  "name": ".gitignore",
+                  "path": "C:\\Users\\Boruch\\tosfos-shabbos-zechus-board\\.gitignore",
+                  "type": "file",
+                  "size": 261,
+                  "modifiedTime": "2026-07-19T17:26:15.928Z"
+                },
+                {
+                  "name": "jsconfig.json",
+                  "path": "C:\\Users\\Boruch\\tosfos-shabbos-zechus-board\\jsconfig.json",
+                  "type": "file",
+                  "size": 93,
+                  "modifiedTime": "2026-07-19T17:00:35.960Z"
+                },
+                {
+                  "name": "next.config.js",
+                  "path": "C:\\Users\\Boruch\\tosfos-shabbos-zechus-board\\next.config.js",
+                  "type": "file",
+                  "size": 120,
+                  "modifiedTime": "2026-07-19T17:00:28.025Z"
+                },
+                {
+                  "name": "package-lock.json",
+                  "path": "C:\\Users\\Boruch\\tosfos-shabbos-zechus-board\\package-lock.json",
+                  "type": "file",
+                  "size": 26015,
+                  "modifiedTime": "2026-07-19T19:07:58.966Z"
+                },
+                {
+                  "name": "package.json",
+                  "path": "C:\\Users\\Boruch\\tosfos-shabbos-zechus-board\\package.json",
+                  "type": "file",
+                  "size": 486,
+                  "modifiedTime": "2026-07-19T19:01:04.904Z"
+                },
+                {
+                  "name": "README.md",
+                  "path": "C:\\Users\\Boruch\\tosfos-shabbos-zechus-board\\README.md",
+                  "type": "file",
+                  "size": 3655,
+                  "modifiedTime": "2026-07-19T17:06:52.057Z"
+                },
+                {
+                  "name": "vercel.json",
+                  "path": "C:\\Users\\Boruch\\tosfos-shabbos-zechus-board\\vercel.json",
+                  "type": "file",
+                  "size": 101,
+                  "modifiedTime": "2026-07-19T19:00:56.788Z"
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "id": "fbd88427-bdee-4550-bfa2-ed1ab3bcd0d5",
+      "promptContext": {
+        "id": "99ddb112-92c1-4bfc-8e70-713b6b520714"
+      },
+      "timestamp": 1784602306284
+    },
+    {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "reasoning",
+          "text": "Good, the project exists. Now let me read the key files to check if the changes are already in place or if I need to make them."
+        },
+        {
+          "type": "text",
+          "text": "Good, the project is there. Let me check the current state of the key files."
+        },
+        {
+          "type": "tool-call",
+          "toolCallId": "call_00_1FCpCHm3LLIYDFRCZyJ37515",
+          "toolName": "fs-read-file",
+          "input": {
+            "path": "C:\\Users\\Boruch\\tosfos-shabbos-zechus-board\\app\\page.js"
+          }
+        },
+        {
+          "type": "tool-call",
+          "toolCallId": "call_01_zOLBGCMeu5bJxhnloas82692",
+          "toolName": "fs-read-file",
+          "input": {
+            "path": "C:\\Users\\Boruch\\tosfos-shabbos-zechus-board\\components\\PrintCard.js"
+          }
+        },
+        {
+          "type": "tool-call",
+          "toolCallId": "call_02_Gie9i617Or46zIyfOphf3090",
+          "toolName": "fs-read-file",
+          "input": {
+            "path": "C:\\Users\\Boruch\\tosfos-shabbos-zechus-board\\components\\NamesCard.js"
+          }
+        }
+      ],
+      "id": "f6dcb56a-21d8-463e-a530-c289f29a512b",
+      "usageReport": {
+        "model": "deepseek/deepseek-v4-pro",
+        "sentTokens": 1261,
+        "receivedTokens": 219,
+        "cacheReadTokens": 12800,
+        "messageCost": 0.0007854650000000002,
+        "agentTotalCost": 0.6833115719999998
+      },
+      "promptContext": {
+        "id": "99ddb112-92c1-4bfc-8e70-713b6b520714"
+      },
+      "timestamp": 1784602309406
+    },
+    {
+      "role": "tool",
+      "content": [
+        {
+          "type": "tool-result",
+          "toolCallId": "call_00_1FCpCHm3LLIYDFRCZyJ37515",
+          "toolName": "fs-read-file",
+          "output": {
+            "type": "json",
+            "value": {
+              "path": "C:\\Users\\Boruch\\tosfos-shabbos-zechus-board\\app\\page.js",
+              "content": "'use client';\n\nimport { useCallback, useEffect, useRef, useState } from 'react';\nimport { config, DEDICATION_KEYS } from '@/content/config';\nimport { TEHILLIM_MAX } from '@/lib/pledges';\nimport RotatingSaying from '@/components/RotatingSaying';\nimport HebrewKeyboard from '@/components/HebrewKeyboard';\nimport PrintCard from '@/components/PrintCard';\nimport ZmanimCard from '@/components/ZmanimCard';\nimport ShiurPlayer from '@/components/ShiurPlayer';\nimport SuggestionBox from '@/components/SuggestionBox';\nimport MiShebeirach from '@/components/MiShebeirach';\nimport NamesCard from '@/components/NamesCard';\nimport CandleChain from '@/components/CandleChain';\n\n/** Print one card without the other landing on the page too. */\nfunction printOnly(id) {\n  document.body.setAttribute('data-print', id);\n  window.print();\n  setTimeout(() => document.body.removeAttribute('data-print'), 500);\n}\n\nconst { afterPresets, afterExtraDefault, afterExtraOptions, beforeOptions, min: FIELD_MIN, max: FIELD_MAX } =\n  config.pledge;\n\nexport default function Home() {\n  const [unlocked, setUnlocked] = useState(false);\n  const [unlocking, setUnlocking] = useState(false);\n  const [gateInput, setGateInput] = useState('');\n  const [gateError, setGateError] = useState('');\n\n  useEffect(() => {\n    if (sessionStorage.getItem('tsb_unlocked') === '1') setUnlocked(true);\n  }, []);\n\n  async function submitGate(e) {\n    e.preventDefault();\n    if (unlocking) return;\n    const code = gateInput.trim();\n    if (!code) return;\n\n    setUnlocking(true);\n    setGateError('');\n    try {\n      const res = await fetch('/api/gate', {\n        method: 'POST',\n        headers: { 'Content-Type': 'application/json' },\n        body: JSON.stringify({ code }),\n      });\n      const data = await res.json();\n      if (data.ok) {\n        sessionStorage.setItem('tsb_unlocked', '1');\n        sessionStorage.setItem('tsb_community_code', code);\n        if (data.token) sessionStorage.setItem('tsb_gate_token', data.token);\n        // A correct code earns the tumbler run and the doors parting before\n        // the board appears. Reduced motion goes straight in.\n        if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {\n          setUnlocked(true);\n          return;\n        }\n        setTimeout(() => setUnlocked(true), 1150);\n      } else {\n        setGateError('That code is not correct.');\n        setUnlocking(false);\n      }\n    } catch {\n      setGateError('Could not reach the server. Please try again.');\n      setUnlocking(false);\n    }\n  }\n\n  if (!unlocked) {\n    return (\n      <main className=\"wrap gate-wrap\">\n        <div className=\"hero rise\">\n          <div className=\"mark\" />\n          <h1>Tosfos Shabbos</h1>\n          <p className=\"lede\">A board of zechuyos — take on a little more Shabbos.</p>\n        </div>\n\n        {/* The shul door. Everything on it is decorative EXCEPT the posted\n            note: that's the hint for the combination, worded the way a shul\n            posts it on the door. The digits themselves are never rendered. */}\n        <div className={`door rise-2 ${unlocking ? 'open' : ''}`}>\n          <div className=\"door-frame\" aria-hidden=\"true\">\n            <div className=\"door-lintel\" dir=\"rtl\" lang=\"he\">מה טובו אהליך יעקב</div>\n            <div className=\"door-leaves\">\n              <div className=\"leaf\" />\n              <div className=\"leaf\" />\n            </div>\n            <span className=\"mezuzah\" />\n          </div>\n          <div className=\"door-note\">\n            <div className=\"note-he\" dir=\"rtl\" lang=\"he\">\n              שני לוחות הברית · אבות · חמישה חומשי תורה\n            </div>\n            <div className=\"note-en\">Shnei Luchos HaBris · Avos · Chamishah Chumshei Torah</div>\n          </div>\n        </div>\n\n        <form className=\"panel gate-panel rise-3\" onSubmit={submitGate}>\n          <div className=\"gate-lock\">\n            {/* The dial turns a little as digits are entered — decoration only. */}\n            <div className={`dial ${unlocking ? 'unlocking' : ''}`} aria-hidden=\"true\">\n              <div\n                className=\"dial-ring\"\n                style={{ transform: `rotate(${gateInput.length * -47}deg)` }}\n              />\n              <div className=\"dial-knob\" />\n              <span className=\"dial-pointer\" />\n            </div>\n            <div className=\"gate-field\">\n              <label htmlFor=\"gate\" dir=\"rtl\" lang=\"he\">זה השער לה׳ צדיקים יבואו בו</label>\n              <input\n                id=\"gate\" type=\"password\" inputMode=\"numeric\" autoComplete=\"off\"\n                value={gateInput} onChange={(e) => setGateInput(e.target.value)} placeholder=\"• • •\" autoFocus\n              />\n            </div>\n          </div>\n          {gateError && <div className=\"msg err\">{gateError}</div>}\n          <button className=\"btn\" type=\"submit\" disabled={unlocking}>\n            {unlocking ? 'Opening…' : 'Enter'}\n          </button>\n        </form>\n      </main>\n    );\n  }\n\n  return <Board />;\n}\n\nfunction Board() {\n  const [groups, setGroups] = useState([]);\n  const [featured, setFeatured] = useState(null);\n  const [isAdmin, setIsAdmin] = useState(false);\n  const [showNames, setShowNames] = useState(false);\n  const [loading, setLoading] = useState(true);\n  const formRef = useRef(null);\n  const [prefill, setPrefill] = useState(null);\n\n  // The Admin link is only shown to someone already signed in as admin.\n  // /admin and every admin API stay ADMIN_CODE-protected regardless.\n  useEffect(() => {\n    setIsAdmin(Boolean(sessionStorage.getItem('tsb_admin_code')));\n  }, []);\n\n  const loadWall = useCallback(async () => {\n    try {\n      const token = sessionStorage.getItem('tsb_gate_token') || '';\n      const res = await fetch('/api/pledges', {\n        cache: 'no-store',\n        headers: token ? { Authorization: `Bearer ${token}` } : {},\n      });\n      if (!res.ok) return;\n      const data = await res.json();\n      setGroups(data.groups || []);\n      setFeatured(data.featured || null);\n    } catch {\n      /* keep prior state */\n    } finally {\n      setLoading(false);\n    }\n  }, []);\n\n  useEffect(() => {\n    loadWall();\n    const t = setInterval(loadWall, 30000);\n    return () => clearInterval(t);\n  }, [loadWall]);\n\n  function handleRePledge(group) {\n    setPrefill({\n      refuahName: group.refuahName,\n      refuahNameEnglish: group.refuahNameEnglish || '',\n      refuahMotherName: group.refuahMotherName || '',\n      refuahRelation: group.refuahRelation || 'ben',\n      dedicationType: group.dedicationType || 'refuah',\n      _n: Date.now(),\n    });\n    formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });\n  }\n\n  // Counted minutes are extra only — the after-Shabbos baseline never counts.\n  const total = groups.reduce((s, g) => s + g.totalMinutesPerWeek, 0);\n  const totalBefore = groups.reduce((s, g) => s + (g.beforeMinutes || 0), 0);\n  const totalOnTop = groups.reduce((s, g) => s + (g.afterExtraMinutes || 0), 0);\n\n  return (\n    <main className=\"wrap\">\n      <div className=\"hero rise\">\n        <div className=\"mark\" />\n        <h1>Tosfos Shabbos</h1>\n        <p className=\"lede\">\n          Take on a little more Shabbos — before it comes in, after it goes out — as a zechus.\n        </p>\n      </div>\n\n      <div className=\"rise-2\"><ShiurPlayer /></div>\n\n      <div className=\"rise-2\"><ZmanimCard /></div>\n\n      {featured?.refuahName && (\n        <section className=\"spotlight rise-2\" aria-label=\"Featured urgent refuah\">\n          <div className=\"sp-kicker\">Please daven for</div>\n          <div className=\"sp-name\" dir=\"auto\">{featured.refuahName}</div>\n          {featured.refuahNameEnglish && <div className=\"sp-en\">{featured.refuahNameEnglish}</div>}\n          {featured.note && <div className=\"sp-note\">{featured.note}</div>}\n          <button\n            className=\"btn ghost\"\n            onClick={() => handleRePledge({\n              refuahName: featured.refuahName,\n              refuahNameEnglish: featured.refuahNameEnglish,\n              dedicationType: featured.dedicationType || 'refuah',\n            })}\n          >\n            + Pledge for this name\n          </button>\n        </section>\n      )}\n\n      <div className=\"rise-2\" style={{ marginTop: 28 }}>\n        <RotatingSaying start={0} interval={9000} />\n      </div>\n\n      {total > 0 && (\n        <section className=\"tally rise-3\" aria-label=\"Community total\">\n          <div className=\"tally-main\">\n            <CountUp value={total} />\n            <span className=\"tally-unit\">Together, the kehillah is keeping</span>\n          </div>\n          <div className=\"tally-sub\">\n            extra minutes of Shabbos — a collective zechus for all{' '}\n            <b>{groups.length}</b> {groups.length === 1 ? 'name' : 'names'}\n          </div>\n          <div className=\"tally-split\">\n            <span><b>{totalBefore}</b> early</span>\n            <span className=\"tally-dot\" aria-hidden=\"true\">·</span>\n            <span><b>{totalOnTop}</b> on top</span>\n          </div>\n          <CandleChain count={groups.length} />\n        </section>\n      )}\n\n      <div ref={formRef}>\n        <Reveal>\n          <PledgeForm prefill={prefill} onCreated={loadWall} communityNames={groups.length} />\n        </Reveal>\n      </div>\n\n      <section className=\"wall\">\n        <Reveal delay={60}>\n          <div className=\"wall-head\">\n            <h2>The Board</h2>\n          </div>\n        </Reveal>\n\n        {loading ? (\n          <div role=\"status\" aria-label=\"Lighting the board\">\n            <SkeletonCard />\n            <SkeletonCard delay={110} />\n          </div>\n        ) : groups.length === 0 ? (\n          <div className=\"panel\">\n            <RotatingSaying start={3} interval={0} />\n            <div className=\"empty\">Be the first to take on Tosfos Shabbos.</div>\n          </div>\n        ) : (\n          groups.map((g, i) => (\n            <WallCard\n              key={`${g.refuahName}-${g.dedicationType}`}\n              group={g}\n              rank={i}\n              maxMinutes={groups[0]?.totalMinutesPerWeek || 1}\n              communityMinutes={total}\n              communityNames={groups.length}\n              onRePledge={() => handleRePledge(g)}\n            />\n          ))\n        )}\n      </section>\n\n      {groups.length > 0 && (\n        <>\n          <div className=\"toolbar no-print\">\n            <button type=\"button\" className=\"linkbtn\" onClick={() => setShowNames((v) => !v)}>\n              📜 {showNames ? 'Hide' : 'Print'} names to daven for\n            </button>\n          </div>\n          {showNames && (\n            <>\n              <NamesCard groups={groups} />\n              <div className=\"toolbar no-print\">\n                <button className=\"btn ghost\" onClick={() => printOnly('names')}>🖨 Print this list</button>\n              </div>\n            </>\n          )}\n        </>\n      )}\n\n      <Reveal delay={60}>\n        <SuggestionBox />\n      </Reveal>\n\n      {isAdmin && (\n        <div className=\"toolbar no-print\">\n          <a className=\"linkbtn\" href=\"/admin\">Admin</a>\n        </div>\n      )}\n    </main>\n  );\n}\n\n/** Ghost of a wall card while the board loads — same footprint, gold shimmer. */\nfunction SkeletonCard({ delay = 0 }) {\n  return (\n    <div className=\"card\" style={{ animationDelay: `${delay}ms` }} aria-hidden=\"true\">\n      <div className=\"skel-row\">\n        <div>\n          <div className=\"skel skel-kicker\" />\n          <div className=\"skel skel-name\" />\n        </div>\n        <div className=\"skel skel-min\" />\n      </div>\n      <div className=\"skel skel-bar\" />\n      <div className=\"skel-pills\">\n        <div className=\"skel skel-pill\" />\n        <div className=\"skel skel-pill\" />\n      </div>\n    </div>\n  );\n}\n\n/** Gentle count-up, used for the community tally and each card's minutes. */\nfunction CountUp({ value, className = 'tally-num' }) {\n  // Default to the real value so the number is correct even if we never animate.\n  const [shown, setShown] = useState(value);\n  useEffect(() => {\n    const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;\n    // In a background tab requestAnimationFrame is suspended, so skip the\n    // animation entirely rather than risk showing a stale 0.\n    if (reduce || document.hidden) { setShown(value); return undefined; }\n\n    let raf;\n    let done = false;\n    const dur = 1350;\n    const start = performance.now();\n    const tick = (t) => {\n      const p = Math.min(1, (t - start) / dur);\n      const eased = 1 - Math.pow(1 - p, 3);\n      setShown(Math.round(value * eased));\n      if (p < 1) raf = requestAnimationFrame(tick);\n      else done = true;\n    };\n    setShown(0);\n    raf = requestAnimationFrame(tick);\n    // Safety net: if rAF is throttled mid-flight, snap to the final value.\n    const fallback = setTimeout(() => { if (!done) setShown(value); }, dur + 400);\n\n    return () => { cancelAnimationFrame(raf); clearTimeout(fallback); };\n  }, [value]);\n  return <span className={className}>{shown.toLocaleString()}</span>;\n}\n\n/**\n * Fade + rise a section in when it first scrolls into view. The class is added\n * once and kept — content must never fade back out while someone reads it.\n * Reduced motion (and any browser without IntersectionObserver) shows the\n * section immediately.\n */\nfunction Reveal({ children, delay = 0 }) {\n  const ref = useRef(null);\n  const [seen, setSeen] = useState(false);\n  useEffect(() => {\n    const el = ref.current;\n    const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;\n    if (!el || reduce || typeof IntersectionObserver === 'undefined') { setSeen(true); return undefined; }\n    // A healthy observer always reports the INITIAL state within a frame or\n    // two, even for off-screen elements. If it never calls back at all, the\n    // environment has IO suspended — reveal rather than stay invisible.\n    let reported = false;\n    const io = new IntersectionObserver(\n      ([entry]) => {\n        reported = true;\n        if (entry.isIntersecting) { setSeen(true); io.disconnect(); }\n      },\n      { rootMargin: '0px 0px -8% 0px', threshold: 0.08 }\n    );\n    io.observe(el);\n    const failsafe = setTimeout(() => { if (!reported) setSeen(true); }, 1500);\n    return () => { io.disconnect(); clearTimeout(failsafe); };\n  }, []);\n  return (\n    <div\n      ref={ref}\n      className={`reveal ${seen ? 'in' : ''}`}\n      style={delay ? { transitionDelay: `${delay}ms` } : undefined}\n    >\n      {children}\n    </div>\n  );\n}\n\nfunction PledgeForm({ prefill, onCreated, communityNames }) {\n  const [refuahName, setRefuahName] = useState('');\n  const [refuahNameEnglish, setRefuahNameEnglish] = useState('');\n  const [motherName, setMotherName] = useState('');\n  const [relation, setRelation] = useState('ben');\n  const [dedicationType, setDedicationType] = useState('refuah');\n  const [tehillim, setTehillim] = useState('');\n  const [nameLang, setNameLang] = useState('he'); // 'he' | 'en'\n\n  // After Shabbos\n  const [afterOn, setAfterOn] = useState(true);\n  const [afterBase, setAfterBase] = useState(60);\n  const [afterCustom, setAfterCustom] = useState(90);\n  const [afterExtra, setAfterExtra] = useState(afterExtraDefault);\n\n  // Before Shabbos\n  const [beforeOn, setBeforeOn] = useState(false);\n  const [beforeMin, setBeforeMin] = useState(10);\n\n  const [weeks, setWeeks] = useState(1);\n  const [pledgerName, setPledgerName] = useState('');\n  const [email, setEmail] = useState('');\n  const [hp, setHp] = useState('');\n  // Which Hebrew field the on-screen keyboard is currently driving.\n  const [kbdFor, setKbdFor] = useState(null); // 'name' | 'mother' | null\n  const [busy, setBusy] = useState(false);\n  const [msg, setMsg] = useState(null);\n  const [submitted, setSubmitted] = useState(null);\n\n  const nameRef = useRef(null);\n  const motherRef = useRef(null);\n  const caretRef = useRef(null);\n\n  useEffect(() => {\n    if (prefill) {\n      setRefuahName(prefill.refuahName || '');\n      setRefuahNameEnglish(prefill.refuahNameEnglish || '');\n      setMotherName(prefill.refuahMotherName || '');\n      setRelation(prefill.refuahRelation || 'ben');\n      setDedicationType(prefill.dedicationType || 'refuah');\n      // Joining a zechus copies the NAME, never someone else's kabbalah.\n      setTehillim('');\n      setSubmitted(null);\n      setMsg(null);\n    }\n  }, [prefill]);\n\n  const kbdRef = kbdFor === 'mother' ? motherRef : nameRef;\n  const kbdValue = kbdFor === 'mother' ? motherName : refuahName;\n  const setKbdValue = kbdFor === 'mother' ? setMotherName : setRefuahName;\n\n  // Restore caret after keyboard-driven edits, in whichever field is active.\n  useEffect(() => {\n    if (caretRef.current != null && kbdRef.current) {\n      kbdRef.current.focus();\n      const p = caretRef.current;\n      kbdRef.current.setSelectionRange(p, p);\n      caretRef.current = null;\n    }\n  }, [refuahName, motherName, kbdRef]);\n\n  function insertAtCaret(ch) {\n    const el = kbdRef.current;\n    const start = el?.selectionStart ?? kbdValue.length;\n    const end = el?.selectionEnd ?? kbdValue.length;\n    caretRef.current = start + ch.length;\n    setKbdValue(kbdValue.slice(0, start) + ch + kbdValue.slice(end));\n  }\n  function backspace() {\n    const el = kbdRef.current;\n    const start = el?.selectionStart ?? kbdValue.length;\n    const end = el?.selectionEnd ?? kbdValue.length;\n    if (start === end) {\n      if (start === 0) return;\n      caretRef.current = start - 1;\n      setKbdValue(kbdValue.slice(0, start - 1) + kbdValue.slice(end));\n    } else {\n      caretRef.current = start;\n      setKbdValue(kbdValue.slice(0, start) + kbdValue.slice(end));\n    }\n  }\n\n  const afterBaseValue = afterBase === 'custom' ? Number(afterCustom) : afterBase;\n  const effAfterBase = afterOn ? afterBaseValue : null;\n  const effAfterExtra = afterOn ? Number(afterExtra) || 0 : 0;\n  const effBefore = beforeOn ? Number(beforeMin) || 0 : 0;\n  // Only genuinely added minutes count — the base is what they keep anyway.\n  const runningTotal = (effBefore || 0) + (effAfterExtra || 0);\n\n  async function submit(e) {\n    e.preventDefault();\n    setMsg(null);\n\n    if (!refuahName.trim()) {\n      setMsg({ type: 'err', text: 'Please enter the name for the dedication.' });\n      return;\n    }\n    if (runningTotal === 0) {\n      setMsg({\n        type: 'err',\n        text: 'Add at least a minute — on top of your usual end time, or before Shabbos.',\n      });\n      return;\n    }\n    if (afterOn && afterBase === 'custom') {\n      const v = Number(afterCustom);\n      if (!Number.isInteger(v) || v < FIELD_MIN || v > FIELD_MAX) {\n        setMsg({ type: 'err', text: `Custom minutes must be a whole number between ${FIELD_MIN} and ${FIELD_MAX}.` });\n        return;\n      }\n    }\n\n    setBusy(true);\n    try {\n      const res = await fetch('/api/pledges', {\n        method: 'POST',\n        headers: { 'Content-Type': 'application/json' },\n        body: JSON.stringify({\n          communityCode: sessionStorage.getItem('tsb_community_code') || '',\n          refuahName: refuahName.trim(),\n          refuahNameEnglish: refuahNameEnglish.trim() || null,\n          refuahMotherName: motherName.trim() || null,\n          refuahRelation: relation,\n          dedicationType,\n          tehillimChapters: tehillim.trim() || null,\n          beforeMinutes: effBefore,\n          afterBaseMinutes: effAfterBase,\n          afterExtraMinutes: effAfterExtra,\n          weeks: Number(weeks),\n          pledgerName: pledgerName.trim() || null,\n          email: email.trim() || null,\n          hp_field: hp,\n        }),\n      });\n      const data = await res.json();\n      if (!res.ok) {\n        setMsg({ type: 'err', text: data.error || 'Something went wrong.' });\n      } else {\n        setSubmitted({\n          refuahName: refuahName.trim(),\n          refuahNameEnglish: refuahNameEnglish.trim() || null,\n          refuahMotherName: motherName.trim() || null,\n          refuahRelation: relation,\n          dedicationType,\n          tehillimChapters: tehillim.trim() || null,\n          beforeMinutes: effBefore,\n          afterBaseMinutes: effAfterBase || 0,\n          afterExtraMinutes: effAfterExtra,\n          weeks: Number(weeks),\n          sayingIndex: Math.abs(refuahName.length + runningTotal + weeks) % 997,\n        });\n        setMsg(null);\n        setKbdFor(null);\n        setPledgerName('');\n        setEmail('');\n        onCreated?.();\n      }\n    } catch {\n      setMsg({ type: 'err', text: 'Network error. Please try again.' });\n    } finally {\n      setBusy(false);\n    }\n  }\n\n  function makeAnother() {\n    setSubmitted(null);\n    setRefuahName('');\n    setRefuahNameEnglish('');\n    // A kabbalah belongs to the pledge it was made on — don't carry it over.\n    setTehillim('');\n  }\n\n  const dedList = DEDICATION_KEYS.map((k) => ({ key: k, ...config.dedications[k] }));\n\n  return (\n    <>\n      <form className=\"panel rise-3\" onSubmit={submit} noValidate>\n        <h2>Make a Pledge</h2>\n        <p className=\"sub\">A little more Shabbos, in someone’s zechus.</p>\n\n        <label>Dedication</label>\n        <div className=\"segment\">\n          {dedList.map((d) => (\n            <div\n              key={d.key}\n              className={`seg ${dedicationType === d.key ? 'active' : ''}`}\n              onClick={() => setDedicationType(d.key)}\n              role=\"button\" tabIndex={0}\n              onKeyDown={(e) => e.key === 'Enter' && setDedicationType(d.key)}\n            >\n              {d.label}\n              <small>{d.hint}</small>\n            </div>\n          ))}\n        </div>\n\n        <label htmlFor=\"refuahName\">Name *</label>\n        <div className=\"segment\" style={{ marginBottom: 10 }}>\n          {[{ k: 'he', l: 'עברית' }, { k: 'en', l: 'English' }].map((r) => (\n            <div\n              key={r.k}\n              className={`seg ${nameLang === r.k ? 'active' : ''}`}\n              onClick={() => setNameLang(r.k)}\n              role=\"button\" tabIndex={0}\n              onKeyDown={(e) => e.key === 'Enter' && setNameLang(r.k)}\n            >\n              {r.l}\n            </div>\n          ))}\n        </div>\n        <input\n          id=\"refuahName\" ref={nameRef} type=\"text\"\n          dir={nameLang === 'he' ? 'rtl' : 'ltr'}\n          className={nameLang === 'he' ? 'he-input' : ''}\n          value={refuahName} onChange={(e) => setRefuahName(e.target.value)}\n          placeholder={nameLang === 'he' ? 'פלוני' : 'e.g. Ploni ben Plonis'} required\n        />\n        {nameLang === 'he' && (\n          <button\n            type=\"button\" className=\"kbd-toggle\"\n            onClick={() => setKbdFor((v) => (v === 'name' ? null : 'name'))}\n          >\n            ⌨ {kbdFor === 'name' ? 'Hide Hebrew keyboard' : 'Hebrew keyboard'}\n          </button>\n        )}\n        {nameLang === 'he' && kbdFor === 'name' && (\n          <HebrewKeyboard\n            onInsert={insertAtCaret} onBackspace={backspace}\n            onSpace={() => insertAtCaret(' ')} onClose={() => setKbdFor(null)}\n          />\n        )}\n\n        {/* Mother's name — what the Mi Shebeirach needs. */}\n        <label htmlFor=\"motherName\">\n          Mother&apos;s name{' '}\n          <span className=\"opt\">\n            {dedicationType === 'refuah' ? '— for the Mi Shebeirach' : '— optional'}\n          </span>\n        </label>\n        <div className=\"relation-row\">\n          <div className=\"segment relation-seg\">\n            {[{ k: 'ben', l: 'בן' }, { k: 'bas', l: 'בת' }].map((r) => (\n              <div\n                key={r.k}\n                className={`seg ${relation === r.k ? 'active' : ''}`}\n                onClick={() => setRelation(r.k)}\n                role=\"button\" tabIndex={0}\n                onKeyDown={(e) => e.key === 'Enter' && setRelation(r.k)}\n              >\n                <span className=\"he-input\" style={{ fontSize: '1.2rem' }}>{r.l}</span>\n              </div>\n            ))}\n          </div>\n          <input\n            id=\"motherName\" ref={motherRef} type=\"text\" dir=\"rtl\" className=\"he-input\"\n            value={motherName} onChange={(e) => setMotherName(e.target.value)}\n            placeholder=\"פלונית\"\n          />\n        </div>\n        <button\n          type=\"button\" className=\"kbd-toggle\"\n          onClick={() => setKbdFor((v) => (v === 'mother' ? null : 'mother'))}\n        >\n          ⌨ {kbdFor === 'mother' ? 'Hide Hebrew keyboard' : \"Hebrew keyboard for mother's name\"}\n        </button>\n        {kbdFor === 'mother' && (\n          <HebrewKeyboard\n            onInsert={insertAtCaret} onBackspace={backspace}\n            onSpace={() => insertAtCaret(' ')} onClose={() => setKbdFor(null)}\n          />\n        )}\n        {refuahName && motherName && (\n          <div className=\"name-preview\" dir={nameLang === 'he' ? 'rtl' : 'ltr'}>\n            {refuahName} {relation === 'bas' ? 'בת' : 'בן'} {motherName}\n          </div>\n        )}\n\n        <label htmlFor=\"refuahNameEnglish\">English name <span className=\"opt\">— optional</span></label>\n        <input\n          id=\"refuahNameEnglish\" type=\"text\"\n          value={refuahNameEnglish} onChange={(e) => setRefuahNameEnglish(e.target.value)}\n          placeholder=\"e.g. Ploni ben Plonis\"\n        />\n\n        {/* Tehillim is a personal kabbalah, not a fixed list — whatever they\n            write here is what gets shown for this name, and blank shows nothing. */}\n        <label htmlFor=\"tehillim\">\n          Tehillim I&apos;m taking on <span className=\"opt\">— optional</span>\n        </label>\n        <input\n          id=\"tehillim\" type=\"text\" maxLength={TEHILLIM_MAX}\n          value={tehillim} onChange={(e) => setTehillim(e.target.value)}\n          placeholder=\"e.g. 20, 30, 121\"\n        />\n        <div className=\"hint\">Which perakim you&apos;re committing to say. Leave blank if none.</div>\n\n        {/* ---------- BEFORE SHABBOS ---------- */}\n        <div className={`end-block ${beforeOn ? 'on' : ''}`}>\n          <div className=\"end-head\">\n            <div>\n              <span className=\"end-ico\" aria-hidden=\"true\">🕯</span>\n              <span className=\"end-title\">Before Shabbos</span>\n              <span className=\"end-sub\">Bring Shabbos in early</span>\n            </div>\n            <span className=\"switch-wrap\">\n              <span className={`switch-state ${beforeOn ? 'on' : ''}`}>{beforeOn ? 'On' : 'Off'}</span>\n              <button\n                type=\"button\" role=\"switch\" aria-checked={beforeOn} aria-label=\"Pledge time before Shabbos\"\n                className={`switch ${beforeOn ? 'on' : ''}`} onClick={() => setBeforeOn((v) => !v)}\n              >\n                <span className=\"knob\" />\n              </button>\n            </span>\n          </div>\n          {beforeOn && (\n            <div className=\"end-body\">\n              <p className=\"end-help\">Accept Shabbos this many minutes <b>earlier</b> than you normally would.</p>\n              <div className=\"chips\">\n                {beforeOptions.map((m) => (\n                  <button\n                    type=\"button\" key={m}\n                    className={`chip ${Number(beforeMin) === m ? 'active' : ''}`}\n                    onClick={() => setBeforeMin(m)}\n                  >+{m}</button>\n                ))}\n              </div>\n              <label htmlFor=\"beforeCustom\" className=\"tight\">Or a custom amount</label>\n              <input\n                id=\"beforeCustom\" type=\"number\" min={1} max={FIELD_MAX}\n                value={beforeMin} onChange={(e) => setBeforeMin(e.target.value)}\n              />\n            </div>\n          )}\n        </div>\n\n        {/* ---------- AFTER SHABBOS ---------- */}\n        <div className={`end-block ${afterOn ? 'on' : ''}`}>\n          <div className=\"end-head\">\n            <div>\n              <span className=\"end-ico\" aria-hidden=\"true\">✦</span>\n              <span className=\"end-title\">After Shabbos</span>\n              <span className=\"end-sub\">Hold Shabbos later (motzai)</span>\n              <span className=\"end-note\">Only what you add on top is counted</span>\n            </div>\n            <span className=\"switch-wrap\">\n              <span className={`switch-state ${afterOn ? 'on' : ''}`}>{afterOn ? 'On' : 'Off'}</span>\n              <button\n                type=\"button\" role=\"switch\" aria-checked={afterOn} aria-label=\"Pledge time after Shabbos\"\n                className={`switch ${afterOn ? 'on' : ''}`} onClick={() => setAfterOn((v) => !v)}\n              >\n                <span className=\"knob\" />\n              </button>\n            </span>\n          </div>\n          {afterOn && (\n            <div className=\"end-body\">\n              <p className=\"end-help\">\n                Your <b>regular</b> Shabbos end time — the minutes past shkiah you already hold.\n                Your tosfos is measured from here.\n              </p>\n              <div className=\"presets\">\n                {afterPresets.map((m) => (\n                  <div\n                    key={m} role=\"button\" tabIndex={0}\n                    className={`preset ${afterBase === m ? 'active' : ''}`}\n                    onClick={() => setAfterBase(m)}\n                    onKeyDown={(e) => e.key === 'Enter' && setAfterBase(m)}\n                  >{m}<small>min</small></div>\n                ))}\n                <div\n                  role=\"button\" tabIndex={0}\n                  className={`preset ${afterBase === 'custom' ? 'active' : ''}`}\n                  onClick={() => setAfterBase('custom')}\n                  onKeyDown={(e) => e.key === 'Enter' && setAfterBase('custom')}\n                >Custom<small>{FIELD_MIN}–{FIELD_MAX}</small></div>\n              </div>\n              {afterBase === 'custom' && (\n                <input\n                  type=\"number\" min={FIELD_MIN} max={FIELD_MAX} style={{ marginTop: 10 }}\n                  value={afterCustom} onChange={(e) => setAfterCustom(e.target.value)}\n                  aria-label=\"Custom minutes after Shabbos\"\n                />\n              )}\n\n              <p className=\"end-help ontop\">…and this is your Tosfos — <b>added on top</b>, and counted:</p>\n              <div className=\"chips\">\n                {afterExtraOptions.map((m) => (\n                  <button\n                    type=\"button\" key={m}\n                    className={`chip ${Number(afterExtra) === m ? 'active' : ''}`}\n                    onClick={() => setAfterExtra(m)}\n                  >+{m}</button>\n                ))}\n                <button\n                  type=\"button\"\n                  className={`chip ${Number(afterExtra) === 0 ? 'active' : ''}`}\n                  onClick={() => setAfterExtra(0)}\n                >none</button>\n              </div>\n            </div>\n          )}\n        </div>\n\n        {/* Zero added minutes is a dead end — offer the fix inline rather than\n            waiting for a submit error the person can't act on. Note this also\n            catches \"base selected but nothing on top\", which adds nothing. */}\n        {runningTotal === 0 && (\n          <div className=\"inline-fix\" role=\"status\">\n            <span>Your usual end time isn’t counted — add a few minutes on top.</span>\n            <button\n              type=\"button\" className=\"mini approve\"\n              onClick={() => { setAfterOn(true); if (!afterBase) setAfterBase(60); setAfterExtra(10); }}\n            >\n              Add +10 on top\n            </button>\n          </div>\n        )}\n\n        {/* running total — extra only */}\n        <div className=\"running\" aria-live=\"polite\">\n          <span>You’re adding</span>\n          <b>{runningTotal} extra min<span> / week</span></b>\n        </div>\n\n        <label htmlFor=\"weeks\">For how many weeks?</label>\n        <select id=\"weeks\" value={weeks} onChange={(e) => setWeeks(Number(e.target.value))}>\n          {[1, 2, 3, 4].map((w) => <option key={w} value={w}>{w} {w === 1 ? 'week' : 'weeks'}</option>)}\n        </select>\n\n        <label htmlFor=\"pledgerName\">Your name <span className=\"opt\">— optional</span></label>\n        <input id=\"pledgerName\" type=\"text\" value={pledgerName} onChange={(e) => setPledgerName(e.target.value)} placeholder=\"Shown on the board only if you add it\" />\n\n        <label htmlFor=\"email\">Email <span className=\"opt\">— optional, private</span></label>\n        <input id=\"email\" type=\"email\" value={email} onChange={(e) => setEmail(e.target.value)} placeholder=\"For a confirmation + a gentle reminder\" autoComplete=\"email\" />\n        <div className=\"hint\">Kept private — never shown on the board.</div>\n\n        <div className=\"hp\" aria-hidden=\"true\">\n          <label htmlFor=\"hp_field\">Leave this field empty</label>\n          <input id=\"hp_field\" name=\"hp_field\" type=\"text\" tabIndex={-1} autoComplete=\"off\" value={hp} onChange={(e) => setHp(e.target.value)} />\n        </div>\n\n        {msg && <div className={`msg ${msg.type}`}>{msg.text}</div>}\n\n        <button className=\"btn\" type=\"submit\" disabled={busy}>\n          {busy ? 'Adding…' : 'Add to the Board'}\n        </button>\n      </form>\n\n      {submitted && (\n        <>\n          <div className=\"panel rise no-print\" style={{ marginTop: 16 }}>\n            <div className=\"msg ok\">Tzku l’mitzvos! Your pledge is on the board.</div>\n            <div className=\"success-actions\">\n              <button className=\"btn ghost\" onClick={() => printOnly('card')}>🖨 Print Shabbos-table card</button>\n              <button className=\"btn ghost\" onClick={makeAnother}>Make another pledge</button>\n            </div>\n            {submitted.dedicationType === 'refuah' && (\n              <MiShebeirach\n                name={submitted.refuahName}\n                motherName={submitted.refuahMotherName}\n                relation={submitted.refuahRelation}\n                tehillim={submitted.tehillimChapters}\n                communityNames={communityNames}\n              />\n            )}\n          </div>\n          <PrintCard pledge={submitted} sayingIndex={submitted.sayingIndex} />\n        </>\n      )}\n    </>\n  );\n}\n\nfunction WallCard({ group, rank, maxMinutes, communityMinutes, communityNames, onRePledge }) {\n  const countdown = useCountdown(group.nearestEnd);\n  const ded = config.dedications[group.dedicationType] || config.dedications.refuah;\n  const before = group.beforeMinutes || 0;\n  const onTop = group.afterExtraMinutes || 0;\n  const share = maxMinutes > 0 ? Math.max(6, Math.round((group.totalMinutesPerWeek / maxMinutes) * 100)) : 0;\n  // Baselines differ per person, so show the range as context — never summed.\n  const baseline =\n    group.baselineMin == null\n      ? null\n      : group.baselineMin === group.baselineMax\n        ? `${group.baselineMin}m`\n        : `${group.baselineMin}–${group.baselineMax}m`;\n\n  return (\n    <div className=\"card\" style={{ animationDelay: `${Math.min(rank * 70, 420)}ms` }}>\n      <div className=\"card-top\">\n        <div>\n          <div className=\"dedication\">{ded.prefix}</div>\n          <div className=\"name\" dir=\"auto\">{group.displayName || group.refuahName}</div>\n          {group.refuahNameEnglish && <div className=\"name-en\">{group.refuahNameEnglish}</div>}\n        </div>\n        <div className=\"minutes\">\n          <b><CountUp value={group.totalMinutesPerWeek} className=\"\" /></b>\n          <small>extra min / week</small>\n        </div>\n      </div>\n\n      {/* proportional glow bar */}\n      <div className=\"card-bar\" aria-hidden=\"true\"><span style={{ width: `${share}%` }} /></div>\n\n      <div className=\"ends-row\">\n        {before > 0 && <span className=\"end-pill before\">🕯 +{before} early</span>}\n        {onTop > 0 && <span className=\"end-pill after\">✦ +{onTop} late</span>}\n        {baseline && <span className=\"end-pill baseline\">holds til {baseline}</span>}\n        <span className=\"end-pill count\">{group.pledgeCount} {group.pledgeCount === 1 ? 'pledge' : 'pledges'}</span>\n      </div>\n\n      {group.pledgers?.length > 0 && <div className=\"pledgers\">With {group.pledgers.join(', ')}</div>}\n\n      {communityMinutes > 0 && communityNames > 1 && (\n        <div className=\"community-note\">\n          Held b&rsquo;zchus <b>{communityNames}</b> names &amp;{' '}\n          <b>{communityMinutes.toLocaleString()}</b> collective minutes of Shabbos\n        </div>\n      )}\n\n      {/* Only the Tehillim actually taken on for this name — nothing if none. */}\n      {group.tehillim?.length > 0 && (\n        <div className=\"card-tehillim\">\n          <span className=\"ct-label\">Tehillim</span>\n          {group.tehillim.map((t, i) => (\n            <span className=\"ct-item\" key={`${t.text}-${i}`}>\n              {t.text}\n              {t.pledger && <span className=\"ct-by\"> — {t.pledger}</span>}\n            </span>\n          ))}\n        </div>\n      )}\n\n      <div className=\"card-bottom\">\n        <span className=\"countdown\">\n          {countdown ? <>Nearest ends in <b>{countdown}</b></> : <>Ended</>}\n        </span>\n        <button className=\"btn ghost no-print\" onClick={onRePledge}>+ Join this zechus</button>\n      </div>\n    </div>\n  );\n}\n\nfunction useCountdown(iso) {\n  const [now, setNow] = useState(() => Date.now());\n  useEffect(() => {\n    const t = setInterval(() => setNow(Date.now()), 60000);\n    return () => clearInterval(t);\n  }, []);\n  if (!iso) return null;\n  let diff = new Date(iso).getTime() - now;\n  if (diff <= 0) return null;\n  const d = Math.floor(diff / 86400000); diff -= d * 86400000;\n  const h = Math.floor(diff / 3600000); diff -= h * 3600000;\n  const m = Math.floor(diff / 60000);\n  if (d > 0) return `${d}d ${h}h`;\n  if (h > 0) return `${h}h ${m}m`;\n  return `${m}m`;\n}\n",
+              "truncated": false,
+              "size": 37500
+            }
+          }
+        },
+        {
+          "type": "tool-result",
+          "toolCallId": "call_01_zOLBGCMeu5bJxhnloas82692",
+          "toolName": "fs-read-file",
+          "output": {
+            "type": "json",
+            "value": {
+              "path": "C:\\Users\\Boruch\\tosfos-shabbos-zechus-board\\components\\PrintCard.js",
+              "content": "'use client';\n\nimport { config } from '@/content/config';\nimport { sayingAt } from '@/content/sayings';\nimport { formatRefuahName } from '@/lib/pledges';\n\n// A printable Shabbos-table card shown after a successful pledge. The on-screen\n// preview is styled light (parchment); @media print hides everything else so\n// only this card prints.\nexport default function PrintCard({ pledge, sayingIndex = 0 }) {\n  if (!pledge) return null;\n  const ded = config.dedications[pledge.dedicationType] || config.dedications.refuah;\n  const saying = sayingAt(sayingIndex);\n\n  const before = pledge.beforeMinutes || 0;\n  const base = pledge.afterBaseMinutes || 0;\n  const extra = pledge.afterExtraMinutes || 0;\n  // Counted total is extra only; the base is shown purely as context.\n  const total = before + extra;\n\n  return (\n    <div className=\"print-card\" id=\"print-card\">\n      <div className=\"pc-foil\" />\n      <div className=\"pc-body\">\n        <div className=\"pc-kicker\">Tosfos Shabbos</div>\n        <div className=\"pc-ded\">{ded.prefix}</div>\n        <div className=\"pc-name\" dir=\"auto\">{formatRefuahName(pledge)}</div>\n        {pledge.refuahNameEnglish && <div className=\"pc-name-en\">{pledge.refuahNameEnglish}</div>}\n\n        <div className=\"pc-ends\">\n          {before > 0 && (\n            <div className=\"pc-end\">\n              <span className=\"pc-end-lbl\">Before Shabbos</span>\n              <span className=\"pc-end-val\">+{before} min early</span>\n            </div>\n          )}\n          {extra > 0 && (\n            <div className=\"pc-end\">\n              <span className=\"pc-end-lbl\">After Shabbos</span>\n              <span className=\"pc-end-val\">+{extra} min on top</span>\n            </div>\n          )}\n        </div>\n\n        {base > 0 && <div className=\"pc-baseline\">usual end time: {base} min past shkia</div>}\n\n        <div className=\"pc-commit\">\n          <b>{total}</b> extra minutes each week\n          <br />\n          for {pledge.weeks} {pledge.weeks === 1 ? 'week' : 'weeks'}\n        </div>\n\n        {saying && (\n          <div className=\"pc-saying\">\n            <div className=\"he\" dir=\"rtl\">{saying.he}</div>\n            <div className=\"en\">{saying.en} — {saying.source}</div>\n          </div>\n        )}\n\n        <div className=\"pc-lilui\" dir=\"rtl\" lang=\"he\">\n          <span className=\"pc-lilui-header\">{config.lilui.header}</span><br/>\n          {config.lilui.names[0]}<br/>\n          {config.lilui.names[1]}\n        </div>\n      </div>\n    </div>\n  );\n}\n",
+              "truncated": false,
+              "size": 2473
+            }
+          }
+        },
+        {
+          "type": "tool-result",
+          "toolCallId": "call_02_Gie9i617Or46zIyfOphf3090",
+          "toolName": "fs-read-file",
+          "output": {
+            "type": "json",
+            "value": {
+              "path": "C:\\Users\\Boruch\\tosfos-shabbos-zechus-board\\components\\NamesCard.js",
+              "content": "'use client';\n\nimport { config } from '@/content/config';\n\n/**\n * A printable list of every ACTIVE refuah name on the board, formatted\n * [name] בן/בת [mother], so one person can daven for everyone at once.\n * Reads from the same wall groups the board renders, so it always matches.\n *\n * Tehillim is per pledge, so each name carries only the perakim actually taken\n * on for it — a name nobody took Tehillim for simply shows no Tehillim line.\n */\nfunction TehillimLine({ group }) {\n  const items = group.tehillim || [];\n  if (items.length === 0) return null;\n  return (\n    <span className=\"nc-teh\" dir=\"rtl\">\n      תהלים: {items.map((t) => t.text).join(' · ')}\n    </span>\n  );\n}\n\nexport default function NamesCard({ groups }) {\n  const refuah = (groups || []).filter((g) => g.dedicationType === 'refuah');\n  const zecher = (groups || []).filter((g) => g.dedicationType === 'zecher');\n\n  const today = new Date().toLocaleDateString('en-US', {\n    month: 'long', day: 'numeric', year: 'numeric',\n  });\n\n  return (\n    <div className=\"print-card names-card\" id=\"names-card\">\n      <div className=\"pc-foil\" />\n      <div className=\"pc-body\">\n        <div className=\"pc-kicker\">Tosfos Shabbos</div>\n        <div className=\"pc-ded\">Names to daven for</div>\n        <div className=\"nc-date\">{today} · b&rsquo;zchus all who strengthen Tosfos Shabbos</div>\n\n        {refuah.length > 0 && (\n          <div className=\"nc-section\">\n            <div className=\"nc-head\">לרפואה שלמה</div>\n            <ul className=\"nc-list\">\n              {refuah.map((g) => (\n                <li key={`${g.refuahName}-${g.refuahMotherName || ''}`}>\n                  <span className=\"nc-name\" dir=\"auto\">{g.displayName || g.refuahName}</span>\n                  {g.refuahNameEnglish && <span className=\"nc-en\">{g.refuahNameEnglish}</span>}\n                  <TehillimLine group={g} />\n                </li>\n              ))}\n            </ul>\n          </div>\n        )}\n\n        {zecher.length > 0 && (\n          <div className=\"nc-section\">\n            <div className=\"nc-head\">לזכר נשמת</div>\n            <ul className=\"nc-list\">\n              {zecher.map((g) => (\n                <li key={`${g.refuahName}-${g.refuahMotherName || ''}`}>\n                  <span className=\"nc-name\" dir=\"auto\">{g.displayName || g.refuahName}</span>\n                  {g.refuahNameEnglish && <span className=\"nc-en\">{g.refuahNameEnglish}</span>}\n                  <TehillimLine group={g} />\n                </li>\n              ))}\n            </ul>\n          </div>\n        )}\n\n        {refuah.length === 0 && zecher.length === 0 && (\n          <div className=\"empty\">No active names right now.</div>\n        )}\n\n        <div className=\"pc-lilui\" dir=\"rtl\" lang=\"he\">\n          <span className=\"pc-lilui-header\">{config.lilui.header}</span><br/>\n          {config.lilui.names[0]}<br/>\n          {config.lilui.names[1]}\n        </div>\n      </div>\n    </div>\n  );\n}\n",
+              "truncated": false,
+              "size": 2954
+            }
+          }
+        }
+      ],
+      "id": "29bf6f32-25d3-4e75-a909-f6a896e7b7e0",
+      "promptContext": {
+        "id": "99ddb112-92c1-4bfc-8e70-713b6b520714"
+      },
+      "timestamp": 1784602309406
+    },
+    {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "reasoning",
+          "text": "All the changes are already in place:\n\n1. `app/page.js` - Has `nameLang` state, עברית/English toggle, `dir={nameLang === 'he' ? 'rtl' : 'ltr'}` on name input, Hebrew keyboard only when `nameLang === 'he'`, `dir=\"auto\"` on WallCard name and spotlight name, name preview `dir` follows language.\n\n2. `components/PrintCard.js` - Has `dir=\"auto\"` on `pc-name`.\n\n3. `components/NamesCard.js` - Has `dir=\"auto\"` on `nc-name` spans.\n\nNow let me also check globals.css to confirm the `direction: rtl` was removed from the relevant CSS rules.\n\nNow I just need to build, commit, and deploy. Let me proceed with that."
+        },
+        {
+          "type": "text",
+          "text": "All changes are in place across all files. Time to build and deploy."
+        },
+        {
+          "type": "tool-call",
+          "toolCallId": "call_00_UL9qEzvCuUvYzjiUzszK3582",
+          "toolName": "todo---update_item_completion",
+          "input": {
+            "name": "Add nameLang state and עברית/English toggle to form",
+            "completed": true
+          }
+        },
+        {
+          "type": "tool-call",
+          "toolCallId": "call_01_S6j02vTCn84mxagcfFcl4972",
+          "toolName": "todo---update_item_completion",
+          "input": {
+            "name": "Make name input dir, placeholder, keyboard follow toggle",
+            "completed": true
+          }
+        },
+        {
+          "type": "tool-call",
+          "toolCallId": "call_02_PjyZ2nDIxztxzYhphD7n9672",
+          "toolName": "todo---update_item_completion",
+          "input": {
+            "name": "Update name preview dir to follow language",
+            "completed": true
+          }
+        },
+        {
+          "type": "tool-call",
+          "toolCallId": "call_03_VVBEyjvhxOhZIQHPqsUW8598",
+          "toolName": "todo---update_item_completion",
+          "input": {
+            "name": "Change WallCard, PrintCard, NamesCard, spotlight to dir=auto",
+            "completed": true
+          }
+        }
+      ],
+      "id": "908582dd-19a0-43ad-bbe7-672f2f776dad",
+      "usageReport": {
+        "model": "deepseek/deepseek-v4-pro",
+        "sentTokens": 13126,
+        "receivedTokens": 446,
+        "cacheReadTokens": 14208,
+        "messageCost": 0.006149334,
+        "agentTotalCost": 0.6894609059999998
+      },
+      "promptContext": {
+        "id": "99ddb112-92c1-4bfc-8e70-713b6b520714"
+      },
+      "timestamp": 1784602316607
+    },
+    {
+      "role": "tool",
+      "content": [
+        {
+          "type": "tool-result",
+          "toolCallId": "call_00_UL9qEzvCuUvYzjiUzszK3582",
+          "toolName": "todo---update_item_completion",
+          "output": {
+            "type": "json",
+            "value": [
+              {
+                "name": "Add nameLang state and עברית/English toggle to form",
+                "completed": true
+              },
+              {
+                "name": "Make name input dir, placeholder, keyboard follow toggle",
+                "completed": false
+              },
+              {
+                "name": "Update name preview dir to follow language",
+                "completed": false
+              },
+              {
+                "name": "Change WallCard, PrintCard, NamesCard, spotlight to dir=auto",
+                "completed": false
+              },
+              {
+                "name": "Build, commit, deploy",
+                "completed": false
+              }
+            ]
+          }
+        },
+        {
+          "type": "tool-result",
+          "toolCallId": "call_01_S6j02vTCn84mxagcfFcl4972",
+          "toolName": "todo---update_item_completion",
+          "output": {
+            "type": "json",
+            "value": [
+              {
+                "name": "Add nameLang state and עברית/English toggle to form",
+                "completed": true
+              },
+              {
+                "name": "Make name input dir, placeholder, keyboard follow toggle",
+                "completed": true
+              },
+              {
+                "name": "Update name preview dir to follow language",
+                "completed": false
+              },
+              {
+                "name": "Change WallCard, PrintCard, NamesCard, spotlight to dir=auto",
+                "completed": false
+              },
+              {
+                "name": "Build, commit, deploy",
+                "completed": false
+              }
+            ]
+          }
+        },
+        {
+          "type": "tool-result",
+          "toolCallId": "call_02_PjyZ2nDIxztxzYhphD7n9672",
+          "toolName": "todo---update_item_completion",
+          "output": {
+            "type": "json",
+            "value": [
+              {
+                "name": "Add nameLang state and עברית/English toggle to form",
+                "completed": true
+              },
+              {
+                "name": "Make name input dir, placeholder, keyboard follow toggle",
+                "completed": true
+              },
+              {
+                "name": "Update name preview dir to follow language",
+                "completed": true
+              },
+              {
+                "name": "Change WallCard, PrintCard, NamesCard, spotlight to dir=auto",
+                "completed": false
+              },
+              {
+                "name": "Build, commit, deploy",
+                "completed": false
+              }
+            ]
+          }
+        },
+        {
+          "type": "tool-result",
+          "toolCallId": "call_03_VVBEyjvhxOhZIQHPqsUW8598",
+          "toolName": "todo---update_item_completion",
+          "output": {
+            "type": "json",
+            "value": [
+              {
+                "name": "Add nameLang state and עברית/English toggle to form",
+                "completed": true
+              },
+              {
+                "name": "Make name input dir, placeholder, keyboard follow toggle",
+                "completed": true
+              },
+              {
+                "name": "Update name preview dir to follow language",
+                "completed": true
+              },
+              {
+                "name": "Change WallCard, PrintCard, NamesCard, spotlight to dir=auto",
+                "completed": true
+              },
+              {
+                "name": "Build, commit, deploy",
+                "completed": false
+              }
+            ]
+          }
+        }
+      ],
+      "id": "111288c9-0650-4737-89b6-ae0d9a45e1f6",
+      "promptContext": {
+        "id": "99ddb112-92c1-4bfc-8e70-713b6b520714"
+      },
+      "timestamp": 1784602316607
+    },
+    {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "reasoning",
+          "text": "All 4 implementation tasks are now marked complete. Now I need to build, commit, and deploy. Let me run the commands."
+        },
+        {
+          "type": "text",
+          "text": "Now building and deploying."
+        },
+        {
+          "type": "tool-call",
+          "toolCallId": "call_00_eHPJN7PM6XDnFzF5WXOp3368",
+          "toolName": "power---bash",
+          "input": {
+            "command": "cd C:\\Users\\Boruch\\tosfos-shabbos-zechus-board && npm run build",
+            "timeout": 120000
+          }
+        }
+      ],
+      "id": "ca6fac2f-817e-4759-b210-f3ba240e7124",
+      "usageReport": {
+        "model": "deepseek/deepseek-v4-pro",
+        "sentTokens": 384,
+        "receivedTokens": 115,
+        "cacheReadTokens": 27776,
+        "messageCost": 0.00036777800000000003,
+        "agentTotalCost": 0.6898286839999997
+      },
+      "promptContext": {
+        "id": "99ddb112-92c1-4bfc-8e70-713b6b520714"
+      },
+      "timestamp": 1784602319949
+    },
+    {
+      "role": "tool",
+      "content": [
+        {
+          "type": "tool-result",
+          "toolCallId": "call_00_eHPJN7PM6XDnFzF5WXOp3368",
+          "toolName": "power---bash",
+          "output": {
+            "type": "json",
+            "value": {
+              "stdout": "",
+              "stderr": "At line:1 char:48\r\n+ cd C:\\Users\\Boruch\\tosfos-shabbos-zechus-board && npm run build\r\n+                                                ~~\r\nThe token '&&' is not a valid statement separator in this version.\r\n    + CategoryInfo          : ParserError: (:) [], ParentContainsErrorRecordException\r\n    + FullyQualifiedErrorId : InvalidEndOfLine\r\n \r\n",
+              "exitCode": 1
+            }
+          }
+        }
+      ],
+      "id": "46c242b4-eb10-4d23-8088-cabd89ced4d6",
+      "promptContext": {
+        "id": "99ddb112-92c1-4bfc-8e70-713b6b520714"
+      },
+      "timestamp": 1784602319949
+    },
+    {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "reasoning",
+          "text": "PowerShell doesn't support `&&`. Let me use `;` instead or just run two separate commands."
+        },
+        {
+          "type": "tool-call",
+          "toolCallId": "call_00_57EvaMpUt3iEJ4jQVJ1o1722",
+          "toolName": "power---bash",
+          "input": {
+            "command": "cd C:\\Users\\Boruch\\tosfos-shabbos-zechus-board; npm run build",
+            "timeout": 120000
+          }
+        }
+      ],
+      "id": "5846da2b-b4c7-472e-8747-881c7f10ec2b",
+      "usageReport": {
+        "model": "deepseek/deepseek-v4-pro",
+        "sentTokens": 361,
+        "receivedTokens": 106,
+        "cacheReadTokens": 28032,
+        "messageCost": 0.000350871,
+        "agentTotalCost": 0.6901795549999997
+      },
+      "promptContext": {
+        "id": "99ddb112-92c1-4bfc-8e70-713b6b520714"
+      },
+      "timestamp": 1784602340984
+    },
+    {
+      "role": "tool",
+      "content": [
+        {
+          "type": "tool-result",
+          "toolCallId": "call_00_57EvaMpUt3iEJ4jQVJ1o1722",
+          "toolName": "power---bash",
+          "output": {
+            "type": "json",
+            "value": {
+              "stdout": "\n> tosfos-shabbos-zechus-board@1.0.0 build\n> next build\n\n  ▲ Next.js 14.2.35\n  - Environments: .env.local\n\n   Creating an optimized production build ...\n ✓ Compiled successfully\n   Linting and checking validity of types ...\n   Collecting page data ...\n   Generating static pages (0/6) ...\n   Generating static pages (1/6) \r\n   Generating static pages (2/6) \r\n   Generating static pages (4/6) \r\n ✓ Generating static pages (6/6)\n   Finalizing page optimization ...\n   Collecting build traces ...\n\nRoute (app)                              Size     First Load JS\n┌ ○ /                                    13 kB           103 kB\n├ ○ /_not-found                          873 B          88.2 kB\n├ ○ /admin                               7.37 kB        97.1 kB\n├ ƒ /api/admin                           0 B                0 B\n├ ƒ /api/admin/export                    0 B                0 B\n├ ƒ /api/cron/reminders                  0 B                0 B\n├ ƒ /api/gate                            0 B                0 B\n├ ƒ /api/pledges                         0 B                0 B\n├ ƒ /api/suggestions                     0 B                0 B\n├ ƒ /api/whatsapp-webhook                0 B                0 B\n├ ƒ /api/zmanim                          0 B                0 B\n├ ƒ /icon                                0 B                0 B\n├ ƒ /opengraph-image                     0 B                0 B\n└ ƒ /twitter-image                       0 B                0 B\n+ First Load JS shared by all            87.3 kB\n  ├ chunks/117-9776bcfde68b9ed6.js       31.7 kB\n  ├ chunks/fd9d1056-88c8a1669018f964.js  53.6 kB\n  └ other shared chunks (total)          1.91 kB\n\n\n○  (Static)   prerendered as static content\nƒ  (Dynamic)  server-rendered on demand\n\n",
+              "stderr": " ⚠ Using edge runtime on a page currently disables static generation for that page\n",
+              "exitCode": 0
+            }
+          }
+        }
+      ],
+      "id": "9fc1ce2e-d596-44c6-a6a3-6979a3dd5547",
+      "promptContext": {
+        "id": "99ddb112-92c1-4bfc-8e70-713b6b520714"
+      },
+      "timestamp": 1784602340984
+    },
+    {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "reasoning",
+          "text": "Build succeeded. Now commit and deploy."
+        },
+        {
+          "type": "text",
+          "text": "Build succeeded. Now commit and deploy."
+        },
+        {
+          "type": "tool-call",
+          "toolCallId": "call_00_dfbt45QYdoNyU3GNhjds6724",
+          "toolName": "power---bash",
+          "input": {
+            "command": "cd C:\\Users\\Boruch\\tosfos-shabbos-zechus-board; git add -A; git commit -m \"Language toggle for name field + dir=auto on all name displays\"",
+            "timeout": 30000
+          }
+        }
+      ],
+      "id": "75b82766-3413-4f65-84a5-41ceed8994ff",
+      "usageReport": {
+        "model": "deepseek/deepseek-v4-pro",
+        "sentTokens": 598,
+        "receivedTokens": 120,
+        "cacheReadTokens": 28416,
+        "messageCost": 0.000467538,
+        "agentTotalCost": 0.6906470929999997
+      },
+      "promptContext": {
+        "id": "99ddb112-92c1-4bfc-8e70-713b6b520714"
+      },
+      "timestamp": 1784602344617
+    },
+    {
+      "role": "tool",
+      "content": [
+        {
+          "type": "tool-result",
+          "toolCallId": "call_00_dfbt45QYdoNyU3GNhjds6724",
+          "toolName": "power---bash",
+          "output": {
+            "type": "json",
+            "value": {
+              "stdout": "[main 7dc04ad] Language toggle for name field + dir=auto on all name displays\n 10 files changed, 100 insertions(+), 27 deletions(-)\n create mode 100644 lib/gate-token.js\n",
+              "stderr": "warning: in the working copy of 'app/api/gate/route.js', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of 'app/api/pledges/route.js', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of 'app/globals.css', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of 'app/opengraph-image.js', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of 'app/page.js', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of 'components/MiShebeirach.js', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of 'components/NamesCard.js', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of 'components/PrintCard.js', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of 'components/RotatingSaying.js', LF will be replaced by CRLF the next time Git touches it\nwarning: in the working copy of 'lib/gate-token.js', LF will be replaced by CRLF the next time Git touches it\n",
+              "exitCode": 0
+            }
+          }
+        }
+      ],
+      "id": "13243948-afe1-45eb-9c5c-f7328cd1723d",
+      "promptContext": {
+        "id": "99ddb112-92c1-4bfc-8e70-713b6b520714"
+      },
+      "timestamp": 1784602344617
+    },
+    {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "reasoning",
+          "text": "Committed. Now deploy to Vercel."
+        },
+        {
+          "type": "tool-call",
+          "toolCallId": "call_00_FmjbmIrF01hade5gzsmP9762",
+          "toolName": "power---bash",
+          "input": {
+            "command": "cd C:\\Users\\Boruch\\tosfos-shabbos-zechus-board; npx vercel --prod --yes",
+            "timeout": 120000
+          }
+        }
+      ],
+      "id": "84a1ad32-dc61-4576-855b-8361e6811db5",
+      "usageReport": {
+        "model": "deepseek/deepseek-v4-pro",
+        "sentTokens": 445,
+        "receivedTokens": 99,
+        "cacheReadTokens": 29056,
+        "messageCost": 0.000385033,
+        "agentTotalCost": 0.6910321259999997
+      },
+      "promptContext": {
+        "id": "99ddb112-92c1-4bfc-8e70-713b6b520714"
+      },
+      "timestamp": 1784602385325
+    },
+    {
+      "role": "tool",
+      "content": [
+        {
+          "type": "tool-result",
+          "toolCallId": "call_00_FmjbmIrF01hade5gzsmP9762",
+          "toolName": "power---bash",
+          "output": {
+            "type": "json",
+            "value": {
+              "stdout": "https://tosfos-shabbos-zechus-board-8e0a9088e-bloriners-projects.vercel.app",
+              "stderr": "Vercel CLI 56.3.1 (Node.js 24.15.0)\nRetrieving project…\nDeploying bloriners-projects/tosfos-shabbos-zechus-board\nUploading [--------------------] (0.0B/92.7KB)\nUploading [========------------] (37.3KB/92.7KB)\nUploading [===========---------] (53.3KB/92.7KB)\nUploading [==================--] (85.3KB/92.7KB)\nUploading [====================] (92.7KB/92.7KB)\n  Inspect         https://vercel.com/bloriners-projects/tosfos-shabbos-zechus-board/HUVuaSP96Xa2PDnoZmTCsV6eqq8q\n  Production      https://tosfos-shabbos-zechus-board-8e0a9088e-bloriners-projects.vercel.app\nBuilding…\nBuilding…\nRunning build in Washington, D.C., USA (East) – iad1\nBuild machine configuration: 2 cores, 8 GB\nRetrieving list of deployment files...\nDownloading 57 deployment files...\nRestored build cache from previous deployment (GzBqy5oZ3R85i5NLodbRgB5YW3t7)\nRunning \"vercel build\"\nVercel CLI 56.2.0\nInstalling dependencies...\nup to date in 565ms\n15 packages are looking for funding\nrun `npm fund` for details\nDetected Next.js version: 14.2.35\nRunning \"npm run build\"\n> tosfos-shabbos-zechus-board@1.0.0 build\n> next build\n▲ Next.js 14.2.35\nCreating an optimized production build ...\n✓ Compiled successfully\nLinting and checking validity of types ...\nCollecting page data ...\n⚠ Using edge runtime on a page currently disables static generation for that page\nGenerating static pages (0/6) ...\nGenerating static pages (1/6)\nGenerating static pages (2/6)\nGenerating static pages (4/6)\n✓ Generating static pages (6/6)\nFinalizing page optimization ...\nCollecting build traces ...\nRoute (app)                              Size     First Load JS\n┌ ○ /                                    13 kB           103 kB\n├ ○ /_not-found                          873 B          88.2 kB\n├ ○ /admin                               7.37 kB        97.1 kB\n├ ƒ /api/admin                           0 B                0 B\n├ ƒ /api/admin/export                    0 B                0 B\n├ ƒ /api/cron/reminders                  0 B                0 B\n├ ƒ /api/gate                            0 B                0 B\n├ ƒ /api/pledges                         0 B                0 B\n├ ƒ /api/suggestions                     0 B                0 B\n├ ƒ /api/whatsapp-webhook                0 B                0 B\n├ ƒ /api/zmanim                          0 B                0 B\n├ ƒ /icon                                0 B                0 B\n├ ƒ /opengraph-image                     0 B                0 B\n└ ƒ /twitter-image                       0 B                0 B\n+ First Load JS shared by all            87.3 kB\n├ chunks/117-9776bcfde68b9ed6.js       31.7 kB\n├ chunks/fd9d1056-88c8a1669018f964.js  53.6 kB\n└ other shared chunks (total)          1.92 kB\n○  (Static)   prerendered as static content\nƒ  (Dynamic)  server-rendered on demand\nTraced Next.js server files in: 34.245ms\nCreated all serverless functions in: 85.532ms\nCollected static files (public/, static/, .next/static): 4.327ms\nBuild Completed in /vercel/output [16s]\nDeploying outputs...\n\u001b[2K\u001b[1A\u001b[2K\u001b[G  Production      https://tosfos-shabbos-zechus-board-8e0a9088e-bloriners-projects.vercel.app\nCompleting…\n▲ Aliased         https://shabboshemeilizok.com\n\n✓ Ready in 36s\n",
+              "exitCode": 0
+            }
+          }
+        }
+      ],
+      "id": "e0ffe5c9-54fc-4092-867e-7459f3b618f0",
+      "promptContext": {
+        "id": "99ddb112-92c1-4bfc-8e70-713b6b520714"
+      },
+      "timestamp": 1784602385325
+    },
+    {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "reasoning",
+          "text": "Deployed successfully! The production URL is https://shabboshemeilizok.com. Let me mark the final task as complete and clean up."
+        },
+        {
+          "type": "text",
+          "text": "Deployed to **https://shabboshemeilizok.com** in 36s."
+        },
+        {
+          "type": "tool-call",
+          "toolCallId": "call_00_C21LvYVbqvoQyAMGPuqB1649",
+          "toolName": "todo---update_item_completion",
+          "input": {
+            "name": "Build, commit, deploy",
+            "completed": true
+          }
+        }
+      ],
+      "id": "42b224b8-1b72-430d-b28c-27a4075e19fd",
+      "usageReport": {
+        "model": "deepseek/deepseek-v4-pro",
+        "sentTokens": 1070,
+        "receivedTokens": 120,
+        "cacheReadTokens": 29568,
+        "messageCost": 0.000677034,
+        "agentTotalCost": 0.6917091599999997
+      },
+      "promptContext": {
+        "id": "99ddb112-92c1-4bfc-8e70-713b6b520714"
+      },
+      "timestamp": 1784602388385
+    },
+    {
+      "role": "tool",
+      "content": [
+        {
+          "type": "tool-result",
+          "toolCallId": "call_00_C21LvYVbqvoQyAMGPuqB1649",
+          "toolName": "todo---update_item_completion",
+          "output": {
+            "type": "json",
+            "value": [
+              {
+                "name": "Add nameLang state and עברית/English toggle to form",
+                "completed": true
+              },
+              {
+                "name": "Make name input dir, placeholder, keyboard follow toggle",
+                "completed": true
+              },
+              {
+                "name": "Update name preview dir to follow language",
+                "completed": true
+              },
+              {
+                "name": "Change WallCard, PrintCard, NamesCard, spotlight to dir=auto",
+                "completed": true
+              },
+              {
+                "name": "Build, commit, deploy",
+                "completed": true
+              }
+            ]
+          }
+        }
+      ],
+      "id": "b20f052a-bc1d-4dfb-880c-6db1f959c99e",
+      "promptContext": {
+        "id": "99ddb112-92c1-4bfc-8e70-713b6b520714"
+      },
+      "timestamp": 1784602388385
+    },
+    {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "reasoning",
+          "text": "All tasks complete. The language toggle and `dir=\"auto\"` changes are now live at https://shabboshemeilizok.com."
+        },
+        {
+          "type": "text",
+          "text": "All done. The language toggle (עברית / English) and `dir=\"auto\"` on all name displays are now live at **https://shabboshemeilizok.com**."
+        }
+      ],
+      "id": "538d8b59-08ec-46b4-856b-0882848c6955",
+      "usageReport": {
+        "model": "deepseek/deepseek-v4-pro",
+        "sentTokens": 136,
+        "receivedTokens": 73,
+        "cacheReadTokens": 30720,
+        "messageCost": 0.00023403000000000003,
+        "agentTotalCost": 0.6919431899999997
+      },
+      "promptContext": {
+        "id": "99ddb112-92c1-4bfc-8e70-713b6b520714"
+      },
+      "timestamp": 1784602390976
+    },
+    {
+      "id": "7db69fe7-2df8-4476-98f4-3e940913516e",
+      "role": "user",
+      "content": "now i need some admin tool where i can fix things if someone posts something wrong. like a mispelling or they mistakenly pledged to much time",
+      "promptContext": {
+        "id": "7db69fe7-2df8-4476-98f4-3e940913516e"
+      },
+      "timestamp": 1784602457616
+    },
+    {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "reasoning",
+          "text": "The user wants an admin panel where they can edit existing pledges - fix spelling mistakes in names, adjust pledged time, etc. Let me first understand the current admin setup and the data model to plan this properly."
+        },
+        {
+          "type": "text",
+          "text": "Let me explore the current admin setup and data model first."
+        },
+        {
+          "type": "tool-call",
+          "toolCallId": "call_00_ARPzTDfSJO7Yza2VMQKk7921",
+          "toolName": "todo---set_items",
+          "input": {
+            "items": [
+              {
+                "name": "Explore current admin page and API",
+                "completed": false
+              },
+              {
+                "name": "Design edit capabilities (name, time, dedication type, etc.)",
+                "completed": false
+              },
+              {
+                "name": "Implement admin edit UI",
+                "completed": false
+              },
+              {
+                "name": "Implement admin edit API endpoint",
+                "completed": false
+              },
+              {
+                "name": "Build, commit, deploy",
+                "completed": false
+              }
+            ],
+            "initialUserPrompt": "Add admin tool to fix/edit pledges - spelling mistakes, wrong time amounts, etc."
+          }
+        }
+      ],
+      "id": "d78d3584-71c2-42e5-b09b-0af6f26af4d2",
+      "usageReport": {
+        "model": "deepseek/deepseek-v4-pro",
+        "sentTokens": 21591,
+        "receivedTokens": 215,
+        "cacheReadTokens": 9344,
+        "messageCost": 0.009613007,
+        "agentTotalCost": 0.7015561969999997
+      },
+      "promptContext": {
+        "id": "7db69fe7-2df8-4476-98f4-3e940913516e"
+      },
+      "timestamp": 1784602464075
+    },
+    {
+      "role": "tool",
+      "content": [
+        {
+          "type": "tool-result",
+          "toolCallId": "call_00_ARPzTDfSJO7Yza2VMQKk7921",
+          "toolName": "todo---set_items",
+          "output": {
+            "type": "text",
+            "value": "Todo items set successfully."
+          }
+        }
+      ],
+      "id": "c8b1808d-af83-4dd7-b64b-514cfbabc33d",
+      "promptContext": {
+        "id": "7db69fe7-2df8-4476-98f4-3e940913516e"
+      },
+      "timestamp": 1784602464075
+    },
+    {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "reasoning",
+          "text": "Let me explore the admin page and the pledges API to understand the data model."
+        },
+        {
+          "type": "tool-call",
+          "toolCallId": "call_00_oEUMWA7WwcgOWzhOILO20970",
+          "toolName": "fs-read-file",
+          "input": {
+            "path": "C:\\Users\\Boruch\\tosfos-shabbos-zechus-board\\app\\admin\\page.js"
+          }
+        },
+        {
+          "type": "tool-call",
+          "toolCallId": "call_01_zsovyNl1R4ziuwOxgY8a7519",
+          "toolName": "fs-read-file",
+          "input": {
+            "path": "C:\\Users\\Boruch\\tosfos-shabbos-zechus-board\\app\\api\\admin\\route.js"
+          }
+        },
+        {
+          "type": "tool-call",
+          "toolCallId": "call_02_PlIKCH0b8Pm7mniVUADl3258",
+          "toolName": "fs-read-file",
+          "input": {
+            "path": "C:\\Users\\Boruch\\tosfos-shabbos-zechus-board\\lib\\pledges.js"
+          }
+        }
+      ],
+      "id": "0c9065e3-25a9-45c0-b3f6-1cea0b13e651",
+      "usageReport": {
+        "model": "deepseek/deepseek-v4-pro",
+        "sentTokens": 304,
+        "receivedTokens": 193,
+        "cacheReadTokens": 30848,
+        "messageCost": 0.000411974,
+        "agentTotalCost": 0.7019681709999998
+      },
+      "promptContext": {
+        "id": "7db69fe7-2df8-4476-98f4-3e940913516e"
+      },
+      "timestamp": 1784602468042
+    },
+    {
+      "role": "tool",
+      "content": [
+        {
+          "type": "tool-result",
+          "toolCallId": "call_00_oEUMWA7WwcgOWzhOILO20970",
+          "toolName": "fs-read-file",
+          "output": {
+            "type": "json",
+            "value": {
+              "path": "C:\\Users\\Boruch\\tosfos-shabbos-zechus-board\\app\\admin\\page.js",
+              "content": "'use client';\n\nimport { useCallback, useEffect, useMemo, useRef, useState } from 'react';\nimport { config } from '@/content/config';\nimport { rowExtraMinutes, formatRefuahName, TEHILLIM_MAX } from '@/lib/pledges';\nimport HebrewKeyboard from '@/components/HebrewKeyboard';\n\nexport default function AdminPage() {\n  const [adminCode, setAdminCode] = useState('');\n  const [authed, setAuthed] = useState(false);\n  const [pledges, setPledges] = useState([]);\n  const [featured, setFeatured] = useState(null);\n  const [suggestions, setSuggestions] = useState([]);\n  const [loading, setLoading] = useState(false);\n  const [error, setError] = useState('');\n  const [tab, setTab] = useState('stats');\n  const [editing, setEditing] = useState(null); // pledge id being edited\n\n  useEffect(() => {\n    const saved = sessionStorage.getItem('tsb_admin_code');\n    if (saved) { setAdminCode(saved); setAuthed(true); }\n  }, []);\n\n  const load = useCallback(async (code) => {\n    const useCode = code ?? adminCode;\n    setLoading(true); setError('');\n    try {\n      const res = await fetch('/api/admin', { headers: { 'x-admin-code': useCode }, cache: 'no-store' });\n      if (res.status === 401) {\n        setError('Wrong admin code.'); setAuthed(false);\n        sessionStorage.removeItem('tsb_admin_code');\n        return false;\n      }\n      const data = await res.json();\n      setPledges(data.pledges || []);\n      setFeatured(data.featured || null);\n      setSuggestions(data.suggestions || []);\n      return true;\n    } catch {\n      setError('Could not load pledges.'); return false;\n    } finally { setLoading(false); }\n  }, [adminCode]);\n\n  useEffect(() => { if (authed) load(); }, [authed, load]);\n\n  async function submitLogin(e) {\n    e.preventDefault();\n    const ok = await load(adminCode);\n    if (ok) { sessionStorage.setItem('tsb_admin_code', adminCode); setAuthed(true); }\n  }\n\n  function signOut() {\n    sessionStorage.removeItem('tsb_admin_code');\n    setAuthed(false); setAdminCode(''); setPledges([]);\n  }\n\n  async function post(payload) {\n    const res = await fetch('/api/admin', {\n      method: 'POST',\n      headers: { 'Content-Type': 'application/json' },\n      body: JSON.stringify({ adminCode, ...payload }),\n    });\n    if (!res.ok) {\n      const d = await res.json().catch(() => ({}));\n      throw new Error(d.error || 'Request failed.');\n    }\n    return res.json();\n  }\n\n  async function moderate(id, status) {\n    setError('');\n    try {\n      await post({ action: 'moderate', id, status });\n      setPledges((prev) => prev.map((p) => (p.id === id ? { ...p, status } : p)));\n    } catch (e) { setError(e.message); }\n  }\n\n  const stats = useAnalytics(pledges);\n\n  if (!authed) {\n    return (\n      <main className=\"wrap gate-wrap\">\n        <div className=\"hero rise\">\n          <div className=\"mark\" />\n          <h1>Admin</h1>\n          <p className=\"lede\">Enter the admin code to continue.</p>\n        </div>\n        <form className=\"panel rise-2\" onSubmit={submitLogin}>\n          <label htmlFor=\"adminCode\">Admin code</label>\n          <input id=\"adminCode\" type=\"password\" autoComplete=\"off\" value={adminCode} onChange={(e) => setAdminCode(e.target.value)} autoFocus />\n          {error && <div className=\"msg err\">{error}</div>}\n          <button className=\"btn\" type=\"submit\">Sign in</button>\n        </form>\n        <div className=\"toolbar\"><a className=\"linkbtn\" href=\"/\">← Back to the board</a></div>\n      </main>\n    );\n  }\n\n  return (\n    <main className=\"wrap\">\n      <div className=\"hero rise\">\n        <div className=\"mark\" />\n        <h1>Admin</h1>\n      </div>\n\n      <div className=\"tabs\">\n        <button className={`tab ${tab === 'stats' ? 'active' : ''}`} onClick={() => setTab('stats')}>Analytics</button>\n        <button className={`tab ${tab === 'queue' ? 'active' : ''}`} onClick={() => setTab('queue')}>\n          Queue <span className=\"tab-count\">{pledges.length}</span>\n        </button>\n        <button className={`tab ${tab === 'suggestions' ? 'active' : ''}`} onClick={() => setTab('suggestions')}>\n          Suggestions\n          {suggestions.filter((s) => s.status === 'new').length > 0 && (\n            <span className=\"tab-badge\">{suggestions.filter((s) => s.status === 'new').length}</span>\n          )}\n        </button>\n        <button className={`tab ${tab === 'whatsapp' ? 'active' : ''}`} onClick={() => setTab('whatsapp')}>WhatsApp</button>\n        <button className={`tab ${tab === 'tools' ? 'active' : ''}`} onClick={() => setTab('tools')}>Tools</button>\n        <button className=\"mini\" onClick={() => load()} title=\"Refresh\">↻</button>\n      </div>\n\n      {error && <div className=\"msg err\">{error}</div>}\n      {loading && <div className=\"empty\">Loading…</div>}\n\n      {!loading && tab === 'stats' && <Analytics stats={stats} />}\n\n      {!loading && tab === 'queue' && (\n        <>\n          {pledges.length === 0 && <div className=\"empty\">No pledges yet.</div>}\n          {pledges.map((p) => {\n            const ded = config.dedications[p.dedication_type] || config.dedications.refuah;\n            const before = p.before_minutes || 0;\n            const base = p.after_base_minutes || 0;\n            const extra = p.after_extra_minutes || 0;\n\n            if (editing === p.id) {\n              return (\n                <EditPledge\n                  key={p.id}\n                  pledge={p}\n                  onCancel={() => setEditing(null)}\n                  onSave={async (fields) => {\n                    setError('');\n                    try {\n                      const r = await post({ action: 'update', id: p.id, ...fields });\n                      setPledges((prev) => prev.map((x) => (x.id === p.id ? r.pledge : x)));\n                      setEditing(null);\n                    } catch (e) { setError(e.message); }\n                  }}\n                />\n              );\n            }\n\n            return (\n              <div className=\"card\" key={p.id}>\n                <div className=\"card-top\">\n                  <div>\n                    <div className=\"dedication\">{ded.prefix}</div>\n                    <div className=\"name\" dir=\"rtl\">{formatRefuahName(p)}</div>\n                    {p.refuah_name_english && <div className=\"name-en\">{p.refuah_name_english}</div>}\n                  </div>\n                  <div className=\"minutes\">\n                    <b>{rowExtraMinutes(p)}</b>\n                    <small>extra min/wk · {p.weeks} {p.weeks === 1 ? 'wk' : 'wks'}</small>\n                  </div>\n                </div>\n\n                <div className=\"ends-row\">\n                  {before > 0 && <span className=\"end-pill before\">🕯 +{before} early</span>}\n                  {extra > 0 && <span className=\"end-pill after\">✦ +{extra} late</span>}\n                  {base > 0 && <span className=\"end-pill baseline\">holds til {base}m</span>}\n                </div>\n\n                <div className=\"admin-meta\">\n                  {p.pledger_name ? `By ${p.pledger_name} · ` : ''}\n                  {p.source} · ends {new Date(p.end_date).toLocaleDateString()}\n                  {p.email && <> · <span className=\"admin-email\">✉ {p.email}</span></>}\n                </div>\n\n                <div className=\"card-bottom\">\n                  <span className={`tag ${p.status}`}>{p.status}</span>\n                  <div className=\"row\">\n                    <button className=\"mini\" onClick={() => setEditing(p.id)}>Edit</button>\n                    {p.status !== 'approved' && <button className=\"mini approve\" onClick={() => moderate(p.id, 'approved')}>Approve</button>}\n                    {p.status !== 'rejected' && <button className=\"mini reject\" onClick={() => moderate(p.id, 'rejected')}>Hide</button>}\n                  </div>\n                </div>\n              </div>\n            );\n          })}\n        </>\n      )}\n\n      {!loading && tab === 'suggestions' && (\n        <Suggestions\n          items={suggestions}\n          onSet={async (id, status) => {\n            setError('');\n            try {\n              await post({ action: 'suggestion', id, status });\n              setSuggestions((prev) => prev.map((s) => (s.id === id ? { ...s, status } : s)));\n            } catch (e) { setError(e.message); }\n          }}\n        />\n      )}\n\n      {!loading && tab === 'whatsapp' && <WhatsAppComposer pledges={pledges} featured={featured} />}\n\n      {!loading && tab === 'tools' && (\n        <Tools\n          pledges={pledges}\n          adminCode={adminCode}\n          featured={featured}\n          onFeature={async (payload) => {\n            setError('');\n            try {\n              const r = await post({ action: 'feature', ...payload });\n              setFeatured(r.featured);\n            } catch (e) { setError(e.message); }\n          }}\n          onUnfeature={async () => {\n            setError('');\n            try { await post({ action: 'unfeature' }); setFeatured(null); }\n            catch (e) { setError(e.message); }\n          }}\n          onError={setError}\n        />\n      )}\n\n      <div className=\"toolbar\">\n        <a className=\"linkbtn\" href=\"/\">← Back to the board</a>\n        <button className=\"linkbtn\" onClick={signOut}>Sign out</button>\n      </div>\n    </main>\n  );\n}\n\n/**\n * Inline editor for one pledge. Sends the same field names the public form\n * sends, so the server runs identical validation on both paths.\n */\nfunction EditPledge({ pledge, onSave, onCancel }) {\n  const [name, setName] = useState(pledge.refuah_name || '');\n  const [english, setEnglish] = useState(pledge.refuah_name_english || '');\n  const [mother, setMother] = useState(pledge.refuah_mother_name || '');\n  const [relation, setRelation] = useState(pledge.refuah_relation || 'ben');\n  const [dedication, setDedication] = useState(pledge.dedication_type || 'refuah');\n  const [tehillim, setTehillim] = useState(pledge.tehillim_chapters || '');\n  const [before, setBefore] = useState(pledge.before_minutes || 0);\n  const [base, setBase] = useState(pledge.after_base_minutes ?? '');\n  const [extra, setExtra] = useState(pledge.after_extra_minutes || 0);\n  const [busy, setBusy] = useState(false);\n  const [kbdFor, setKbdFor] = useState(null);\n\n  const nameRef = useRef(null);\n  const motherRef = useRef(null);\n  const caretRef = useRef(null);\n\n  const kbdRef = kbdFor === 'mother' ? motherRef : nameRef;\n  const kbdValue = kbdFor === 'mother' ? mother : name;\n  const setKbdValue = kbdFor === 'mother' ? setMother : setName;\n\n  useEffect(() => {\n    if (caretRef.current != null && kbdRef.current) {\n      kbdRef.current.focus();\n      const p = caretRef.current;\n      kbdRef.current.setSelectionRange(p, p);\n      caretRef.current = null;\n    }\n  }, [name, mother, kbdRef]);\n\n  function insertAtCaret(ch) {\n    const el = kbdRef.current;\n    const s = el?.selectionStart ?? kbdValue.length;\n    const e = el?.selectionEnd ?? kbdValue.length;\n    caretRef.current = s + ch.length;\n    setKbdValue(kbdValue.slice(0, s) + ch + kbdValue.slice(e));\n  }\n  function backspace() {\n    const el = kbdRef.current;\n    const s = el?.selectionStart ?? kbdValue.length;\n    const e = el?.selectionEnd ?? kbdValue.length;\n    if (s === e) {\n      if (s === 0) return;\n      caretRef.current = s - 1;\n      setKbdValue(kbdValue.slice(0, s - 1) + kbdValue.slice(e));\n    } else {\n      caretRef.current = s;\n      setKbdValue(kbdValue.slice(0, s) + kbdValue.slice(e));\n    }\n  }\n\n  async function save() {\n    setBusy(true);\n    await onSave({\n      refuahName: name.trim(),\n      refuahNameEnglish: english.trim() || null,\n      refuahMotherName: mother.trim() || null,\n      refuahRelation: relation,\n      dedicationType: dedication,\n      tehillimChapters: tehillim.trim() || null,\n      beforeMinutes: Number(before) || 0,\n      afterBaseMinutes: base === '' ? null : Number(base),\n      afterExtraMinutes: Number(extra) || 0,\n      weeks: pledge.weeks,\n    });\n    setBusy(false);\n  }\n\n  return (\n    <div className=\"card editing\">\n      <div className=\"dedication\">Editing pledge</div>\n\n      <label htmlFor={`e-name-${pledge.id}`}>Name (Hebrew)</label>\n      <input\n        id={`e-name-${pledge.id}`} ref={nameRef} type=\"text\" dir=\"rtl\" className=\"he-input\"\n        value={name} onChange={(e) => setName(e.target.value)}\n      />\n      <button type=\"button\" className=\"kbd-toggle\" onClick={() => setKbdFor((v) => (v === 'name' ? null : 'name'))}>\n        ⌨ {kbdFor === 'name' ? 'Hide keyboard' : 'Hebrew keyboard'}\n      </button>\n      {kbdFor === 'name' && (\n        <HebrewKeyboard onInsert={insertAtCaret} onBackspace={backspace} onSpace={() => insertAtCaret(' ')} onClose={() => setKbdFor(null)} />\n      )}\n\n      <label htmlFor={`e-mother-${pledge.id}`}>Mother&apos;s name</label>\n      <div className=\"relation-row\">\n        <div className=\"segment relation-seg\">\n          {[{ k: 'ben', l: 'בן' }, { k: 'bas', l: 'בת' }].map((r) => (\n            <div\n              key={r.k} className={`seg ${relation === r.k ? 'active' : ''}`}\n              onClick={() => setRelation(r.k)} role=\"button\" tabIndex={0}\n              onKeyDown={(e) => e.key === 'Enter' && setRelation(r.k)}\n            >\n              <span className=\"he-input\" style={{ fontSize: '1.1rem' }}>{r.l}</span>\n            </div>\n          ))}\n        </div>\n        <input\n          id={`e-mother-${pledge.id}`} ref={motherRef} type=\"text\" dir=\"rtl\" className=\"he-input\"\n          value={mother} onChange={(e) => setMother(e.target.value)}\n        />\n      </div>\n      <button type=\"button\" className=\"kbd-toggle\" onClick={() => setKbdFor((v) => (v === 'mother' ? null : 'mother'))}>\n        ⌨ {kbdFor === 'mother' ? 'Hide keyboard' : \"Hebrew keyboard for mother's name\"}\n      </button>\n      {kbdFor === 'mother' && (\n        <HebrewKeyboard onInsert={insertAtCaret} onBackspace={backspace} onSpace={() => insertAtCaret(' ')} onClose={() => setKbdFor(null)} />\n      )}\n\n      <label htmlFor={`e-en-${pledge.id}`}>English name</label>\n      <input id={`e-en-${pledge.id}`} type=\"text\" value={english} onChange={(e) => setEnglish(e.target.value)} />\n\n      <label>Dedication</label>\n      <div className=\"segment\">\n        {Object.entries(config.dedications).map(([k, d]) => (\n          <div\n            key={k} className={`seg ${dedication === k ? 'active' : ''}`}\n            onClick={() => setDedication(k)} role=\"button\" tabIndex={0}\n            onKeyDown={(e) => e.key === 'Enter' && setDedication(k)}\n          >\n            {d.label}\n          </div>\n        ))}\n      </div>\n\n      <label htmlFor={`e-teh-${pledge.id}`}>Tehillim taken on</label>\n      <input\n        id={`e-teh-${pledge.id}`} type=\"text\" maxLength={TEHILLIM_MAX}\n        value={tehillim} placeholder=\"— none —\"\n        onChange={(e) => setTehillim(e.target.value)}\n      />\n\n      <div className=\"edit-mins\">\n        <div>\n          <label htmlFor={`e-before-${pledge.id}`}>Before (early)</label>\n          <input id={`e-before-${pledge.id}`} type=\"number\" min={0} max={180} value={before} onChange={(e) => setBefore(e.target.value)} />\n        </div>\n        <div>\n          <label htmlFor={`e-base-${pledge.id}`}>Usual end</label>\n          <input id={`e-base-${pledge.id}`} type=\"number\" min={18} max={180} value={base} placeholder=\"—\" onChange={(e) => setBase(e.target.value)} />\n        </div>\n        <div>\n          <label htmlFor={`e-extra-${pledge.id}`}>On top</label>\n          <input id={`e-extra-${pledge.id}`} type=\"number\" min={0} max={180} value={extra} onChange={(e) => setExtra(e.target.value)} />\n        </div>\n      </div>\n      <div className=\"hint\">\n        Counted: <b>{(Number(before) || 0) + (Number(extra) || 0)}</b> extra min/week\n        {' '}(the usual end time isn&apos;t counted)\n      </div>\n\n      <div className=\"success-actions\">\n        <button className=\"btn ghost\" onClick={save} disabled={busy}>{busy ? 'Saving…' : 'Save changes'}</button>\n        <button className=\"btn ghost\" onClick={onCancel} disabled={busy}>Cancel</button>\n      </div>\n    </div>\n  );\n}\n\nfunction Suggestions({ items, onSet }) {\n  const [filter, setFilter] = useState('new');\n  const shown = items.filter((s) => (filter === 'all' ? true : s.status === filter));\n\n  return (\n    <>\n      <div className=\"tabs\" style={{ marginTop: 0 }}>\n        {['new', 'handled', 'dismissed', 'all'].map((f) => (\n          <button key={f} className={`tab ${filter === f ? 'active' : ''}`} onClick={() => setFilter(f)}>\n            {f[0].toUpperCase() + f.slice(1)}\n            <span className=\"tab-count\">\n              {f === 'all' ? items.length : items.filter((s) => s.status === f).length}\n            </span>\n          </button>\n        ))}\n      </div>\n\n      {shown.length === 0 ? (\n        <div className=\"empty\">Nothing here.</div>\n      ) : (\n        shown.map((s) => (\n          <div className=\"card\" key={s.id}>\n            <div className=\"sg-body\">{s.body}</div>\n            <div className=\"admin-meta\">\n              {s.name ? `${s.name} · ` : 'Anonymous · '}\n              {new Date(s.created_at).toLocaleString()}\n              {s.email && (\n                <> · <a className=\"admin-email\" href={`mailto:${s.email}`}>✉ {s.email}</a></>\n              )}\n            </div>\n            <div className=\"card-bottom\">\n              <span className={`tag ${s.status === 'new' ? 'pending' : s.status === 'handled' ? 'approved' : 'rejected'}`}>\n                {s.status}\n              </span>\n              <div className=\"row\">\n                {s.status !== 'handled' && (\n                  <button className=\"mini approve\" onClick={() => onSet(s.id, 'handled')}>Mark handled</button>\n                )}\n                {s.status !== 'dismissed' && (\n                  <button className=\"mini reject\" onClick={() => onSet(s.id, 'dismissed')}>Dismiss</button>\n                )}\n                {s.status !== 'new' && (\n                  <button className=\"mini\" onClick={() => onSet(s.id, 'new')}>Reopen</button>\n                )}\n              </div>\n            </div>\n          </div>\n        ))\n      )}\n    </>\n  );\n}\n\n/** Active, approved pledges grouped by name — shared by the tools + composer. */\nfunction useActiveNames(pledges) {\n  return useMemo(() => {\n    const now = Date.now();\n    const map = new Map();\n    pledges\n      .filter((p) => p.status === 'approved' && new Date(p.end_date).getTime() > now)\n      .forEach((p) => {\n        const key = `${p.refuah_name}||${p.dedication_type || 'refuah'}`;\n        if (!map.has(key)) {\n          map.set(key, {\n            refuahName: p.refuah_name,\n            refuahNameEnglish: p.refuah_name_english || null,\n            dedicationType: p.dedication_type || 'refuah',\n            minutes: 0, count: 0,\n          });\n        }\n        const e = map.get(key);\n        e.minutes += rowExtraMinutes(p); e.count += 1;\n      });\n    return [...map.values()].sort((a, b) => b.minutes - a.minutes);\n  }, [pledges]);\n}\n\n/** Generates ready-to-paste text for a WhatsApp Broadcast list. No API needed. */\nfunction WhatsAppComposer({ pledges, featured }) {\n  const names = useActiveNames(pledges);\n  const [zip, setZip] = useState('');\n  const [zmanim, setZmanim] = useState(null);\n  const [busy, setBusy] = useState(false);\n  const [zErr, setZErr] = useState('');\n  const [copied, setCopied] = useState(false);\n\n  useEffect(() => {\n    try {\n      const saved = JSON.parse(localStorage.getItem('tsb_loc') || 'null');\n      if (saved?.zip) { setZip(saved.zip); fetchZmanim(saved.zip); }\n    } catch { /* ignore */ }\n    // eslint-disable-next-line react-hooks/exhaustive-deps\n  }, []);\n\n  async function fetchZmanim(z) {\n    setBusy(true); setZErr('');\n    try {\n      const res = await fetch(`/api/zmanim?zip=${encodeURIComponent(z)}`, { cache: 'no-store' });\n      const j = await res.json();\n      if (!res.ok) { setZErr(j.error || 'Could not load zmanim.'); setZmanim(null); }\n      else setZmanim(j);\n    } catch { setZErr('Could not load zmanim.'); }\n    finally { setBusy(false); }\n  }\n\n  const text = useMemo(() => {\n    const L = [];\n    if (zmanim) {\n      L.push(`🕯 *Shabbos Zmanim* — ${zmanim.location}`);\n      if (zmanim.parasha) L.push(zmanim.parasha.title);\n      if (zmanim.candles) L.push(`Candle lighting: ${zmanim.candles.title.replace(/^.*?:\\s*/, '')}`);\n      if (zmanim.havdalah) L.push(`Motzai Shabbos: ${zmanim.havdalah.title.replace(/^.*?:\\s*/, '')}`);\n      L.push('');\n    }\n    if (featured?.refuahName) {\n      L.push(`🙏 *Please daven especially for:*`);\n      L.push(`${featured.refuahName}${featured.refuahNameEnglish ? ` (${featured.refuahNameEnglish})` : ''}`);\n      if (featured.note) L.push(featured.note);\n      L.push('');\n    }\n    const refuah = names.filter((n) => n.dedicationType === 'refuah');\n    const zecher = names.filter((n) => n.dedicationType === 'zecher');\n    if (refuah.length) {\n      L.push('*Tosfos Shabbos this week — lirfuah shleimah:*');\n      refuah.forEach((n) => L.push(`• ${n.refuahName}${n.refuahNameEnglish ? ` (${n.refuahNameEnglish})` : ''}`));\n      L.push('');\n    }\n    if (zecher.length) {\n      L.push(\"*L'zecher nishmas:*\");\n      zecher.forEach((n) => L.push(`• ${n.refuahName}${n.refuahNameEnglish ? ` (${n.refuahNameEnglish})` : ''}`));\n      L.push('');\n    }\n    const origin = typeof window !== 'undefined' ? window.location.origin : '';\n    L.push(`Take on a few extra minutes of Shabbos: ${origin}`);\n    L.push('');\n    L.push(config.lilui.header);\nL.push(config.lilui.names[0]);\nL.push(config.lilui.names[1]);\n    return L.join('\\n');\n  }, [zmanim, names, featured]);\n\n  async function copy() {\n    try {\n      await navigator.clipboard.writeText(text);\n      setCopied(true); setTimeout(() => setCopied(false), 2000);\n    } catch {\n      setZErr('Could not copy — select the text and copy manually.');\n    }\n  }\n\n  return (\n    <div className=\"panel rise\">\n      <h2>This week&apos;s WhatsApp broadcast</h2>\n      <p className=\"sub\">Generates text to paste into your WhatsApp Broadcast list. Nothing is sent from here.</p>\n\n      <label htmlFor=\"wzip\">Zmanim location (US ZIP)</label>\n      <div className=\"field-row\">\n        <input id=\"wzip\" type=\"text\" inputMode=\"numeric\" maxLength={5} value={zip} onChange={(e) => setZip(e.target.value)} placeholder=\"e.g. 11219\" />\n        <button type=\"button\" className=\"mini\" onClick={() => fetchZmanim(zip)} disabled={busy}>\n          {busy ? '…' : 'Load'}\n        </button>\n      </div>\n      {zErr && <div className=\"msg err\">{zErr}</div>}\n\n      <label htmlFor=\"wtext\" style={{ marginTop: 18 }}>Ready to paste</label>\n      <textarea id=\"wtext\" className=\"broadcast\" readOnly value={text} rows={16} />\n\n      <div className=\"success-actions\">\n        <button className=\"btn ghost\" onClick={copy}>{copied ? '✓ Copied' : '📋 Copy text'}</button>\n        <a className=\"btn ghost\" href={`https://wa.me/?text=${encodeURIComponent(text)}`} target=\"_blank\" rel=\"noopener noreferrer\">\n          Open in WhatsApp\n        </a>\n      </div>\n    </div>\n  );\n}\n\nfunction Tools({ pledges, adminCode, featured, onFeature, onUnfeature, onError }) {\n  const names = useActiveNames(pledges);\n  const [sel, setSel] = useState('');\n  const [note, setNote] = useState('');\n  const [downloading, setDownloading] = useState('');\n\n  async function downloadCsv({ emails, scope }) {\n    setDownloading(`${scope}-${emails ? 'e' : 'n'}`);\n    onError('');\n    try {\n      const qs = new URLSearchParams({ scope });\n      if (emails) qs.set('emails', '1');\n      const res = await fetch(`/api/admin/export?${qs}`, { headers: { 'x-admin-code': adminCode } });\n      if (!res.ok) { onError('Export failed.'); return; }\n      const blob = await res.blob();\n      const url = URL.createObjectURL(blob);\n      const a = document.createElement('a');\n      a.href = url;\n      a.download = `tosfos-shabbos-${scope}.csv`;\n      document.body.appendChild(a); a.click(); a.remove();\n      URL.revokeObjectURL(url);\n    } catch {\n      onError('Export failed.');\n    } finally { setDownloading(''); }\n  }\n\n  function feature() {\n    const n = names.find((x) => `${x.refuahName}||${x.dedicationType}` === sel);\n    if (!n) { onError('Pick a name to feature.'); return; }\n    onFeature({\n      refuahName: n.refuahName,\n      refuahNameEnglish: n.refuahNameEnglish,\n      dedicationType: n.dedicationType,\n      note: note.trim() || null,\n    });\n  }\n\n  return (\n    <>\n      <div className=\"panel rise\">\n        <h2>Featured urgent refuah</h2>\n        <p className=\"sub\">Spotlights one name at the top of the board.</p>\n\n        {featured?.refuahName ? (\n          <div className=\"featured-now\">\n            <div>\n              <div className=\"dedication\">Currently featured</div>\n              <div className=\"name\" dir=\"rtl\">{featured.refuahName}</div>\n              {featured.refuahNameEnglish && <div className=\"name-en\">{featured.refuahNameEnglish}</div>}\n              {featured.note && <div className=\"admin-meta\">{featured.note}</div>}\n            </div>\n            <button className=\"mini reject\" onClick={onUnfeature}>Clear</button>\n          </div>\n        ) : (\n          <div className=\"admin-meta\">No name is currently featured.</div>\n        )}\n\n        <label htmlFor=\"featSel\">Choose a name</label>\n        <select id=\"featSel\" value={sel} onChange={(e) => setSel(e.target.value)}>\n          <option value=\"\">— select —</option>\n          {names.map((n) => (\n            <option key={`${n.refuahName}||${n.dedicationType}`} value={`${n.refuahName}||${n.dedicationType}`}>\n              {n.refuahName}{n.refuahNameEnglish ? ` (${n.refuahNameEnglish})` : ''} — {n.dedicationType}\n            </option>\n          ))}\n        </select>\n\n        <label htmlFor=\"featNote\">Short note <span className=\"opt\">— optional</span></label>\n        <input id=\"featNote\" type=\"text\" maxLength={200} value={note} onChange={(e) => setNote(e.target.value)} placeholder=\"e.g. Surgery this Tuesday\" />\n\n        <button className=\"btn\" onClick={feature}>Feature this name</button>\n      </div>\n\n      <div className=\"panel rise-2\">\n        <h2>Export CSV</h2>\n        <p className=\"sub\">\n          Emails are left out by default so the file is safe to hand to a rav or gabbai.\n        </p>\n        <div className=\"success-actions\">\n          <button className=\"btn ghost\" onClick={() => downloadCsv({ emails: false, scope: 'active' })} disabled={!!downloading}>\n            ⬇ Active names\n          </button>\n          <button className=\"btn ghost\" onClick={() => downloadCsv({ emails: false, scope: 'all' })} disabled={!!downloading}>\n            ⬇ All pledges\n          </button>\n          <button className=\"btn ghost\" onClick={() => downloadCsv({ emails: true, scope: 'all' })} disabled={!!downloading}>\n            ⬇ All + emails\n          </button>\n        </div>\n        <div className=\"hint\">Opens in Excel with Hebrew intact (UTF-8 BOM included).</div>\n      </div>\n    </>\n  );\n}\n\n/** All analytics derived client-side from the admin payload — no extra query. */\nfunction useAnalytics(pledges) {\n  return useMemo(() => {\n    const now = Date.now();\n    const approved = pledges.filter((p) => p.status === 'approved');\n    const active = approved.filter((p) => new Date(p.end_date).getTime() > now);\n    const expired = approved.filter((p) => new Date(p.end_date).getTime() <= now);\n\n    // Counted minutes are extra only — the after-Shabbos baseline never counts.\n    const minutesActive = active.reduce((s, p) => s + rowExtraMinutes(p), 0);\n    const beforeTotal = active.reduce((s, p) => s + (p.before_minutes || 0), 0);\n    const afterTotal = active.reduce((s, p) => s + (p.after_extra_minutes || 0), 0);\n\n    const byDedication = { refuah: 0, zecher: 0 };\n    active.forEach((p) => { byDedication[p.dedication_type || 'refuah'] += 1; });\n\n    const withBefore = active.filter((p) => (p.before_minutes || 0) > 0).length;\n    const withAfter = active.filter((p) => (p.after_extra_minutes || 0) > 0).length;\n    const withBoth = active.filter(\n      (p) => (p.before_minutes || 0) > 0 && (p.after_extra_minutes || 0) > 0\n    ).length;\n\n    const emails = new Set(pledges.filter((p) => p.email).map((p) => p.email));\n\n    const nameMap = new Map();\n    active.forEach((p) => {\n      const key = `${p.refuah_name}||${p.dedication_type || 'refuah'}`;\n      if (!nameMap.has(key)) {\n        nameMap.set(key, { name: p.refuah_name, ded: p.dedication_type || 'refuah', count: 0, minutes: 0 });\n      }\n      const e = nameMap.get(key);\n      e.count += 1; e.minutes += rowExtraMinutes(p);\n    });\n    const topNames = [...nameMap.values()].sort((a, b) => b.minutes - a.minutes).slice(0, 6);\n\n    const days = [];\n    const dayMs = 86400000;\n    const today = new Date(); today.setHours(0, 0, 0, 0);\n    for (let i = 29; i >= 0; i--) {\n      const d = new Date(today.getTime() - i * dayMs);\n      days.push({ d, label: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }), n: 0 });\n    }\n    pledges.forEach((p) => {\n      const c = new Date(p.created_at); c.setHours(0, 0, 0, 0);\n      const idx = days.findIndex((x) => x.d.getTime() === c.getTime());\n      if (idx >= 0) days[idx].n += 1;\n    });\n\n    const avg = active.length ? Math.round(minutesActive / active.length) : 0;\n    const weeksAvg = active.length\n      ? (active.reduce((s, p) => s + (p.weeks || 0), 0) / active.length).toFixed(1)\n      : '0';\n\n    return {\n      totalPledges: pledges.length,\n      approved: approved.length,\n      active: active.length,\n      expired: expired.length,\n      hidden: pledges.filter((p) => p.status === 'rejected').length,\n      minutesActive, beforeTotal, afterTotal,\n      byDedication, withBefore, withAfter, withBoth,\n      emailCount: emails.size,\n      uniqueNames: nameMap.size,\n      avg, weeksAvg,\n      topNames, days,\n    };\n  }, [pledges]);\n}\n\nfunction Analytics({ stats }) {\n  const maxDay = Math.max(1, ...stats.days.map((d) => d.n));\n  const dedTotal = stats.byDedication.refuah + stats.byDedication.zecher || 1;\n  const refuahPct = Math.round((stats.byDedication.refuah / dedTotal) * 100);\n\n  return (\n    <>\n      <div className=\"stat-grid rise\">\n        <Stat label=\"Extra minutes / week (added)\" value={stats.minutesActive.toLocaleString()} hero />\n        <Stat label=\"Active pledges\" value={stats.active} />\n        <Stat label=\"Names\" value={stats.uniqueNames} />\n        <Stat label=\"Total pledges\" value={stats.totalPledges} />\n        <Stat label=\"Avg / pledge\" value={`${stats.avg} min`} />\n        <Stat label=\"Avg weeks\" value={stats.weeksAvg} />\n        <Stat label=\"Expired\" value={stats.expired} />\n        <Stat label=\"Hidden\" value={stats.hidden} />\n        <Stat label=\"Email signups\" value={stats.emailCount} />\n      </div>\n\n      <div className=\"panel rise-2\">\n        <h2>Both ends <span className=\"h2-note\">— added minutes only</span></h2>\n        <div className=\"split-bar\" aria-hidden=\"true\">\n          <span className=\"sb-before\" style={{ width: `${(stats.beforeTotal / Math.max(1, stats.minutesActive)) * 100}%` }} />\n          <span className=\"sb-after\" style={{ width: `${(stats.afterTotal / Math.max(1, stats.minutesActive)) * 100}%` }} />\n        </div>\n        <div className=\"split-legend\">\n          <span><i className=\"dot before\" /> Before Shabbos (early) — <b>{stats.beforeTotal}</b> min ({stats.withBefore} pledges)</span>\n          <span><i className=\"dot after\" /> After Shabbos (on top) — <b>{stats.afterTotal}</b> min ({stats.withAfter} pledges)</span>\n          <span className=\"muted\">{stats.withBoth} pledged both ends</span>\n        </div>\n      </div>\n\n      <div className=\"panel rise-2\">\n        <h2>Dedications</h2>\n        <div className=\"split-bar\" aria-hidden=\"true\">\n          <span className=\"sb-refuah\" style={{ width: `${refuahPct}%` }} />\n          <span className=\"sb-zecher\" style={{ width: `${100 - refuahPct}%` }} />\n        </div>\n        <div className=\"split-legend\">\n          <span><i className=\"dot refuah\" /> Lirfuah shleimah — <b>{stats.byDedication.refuah}</b></span>\n          <span><i className=\"dot zecher\" /> L&apos;zecher nishmas — <b>{stats.byDedication.zecher}</b></span>\n        </div>\n      </div>\n\n      <div className=\"panel rise-2\">\n        <h2>New pledges — last 30 days</h2>\n        <svg className=\"spark\" viewBox={`0 0 ${stats.days.length * 10} 40`} preserveAspectRatio=\"none\" role=\"img\" aria-label=\"Bar chart of new pledges per day over the last 30 days\">\n          <defs>\n            <linearGradient id=\"goldbar\" x1=\"0\" y1=\"1\" x2=\"0\" y2=\"0\">\n              <stop offset=\"0%\" stopColor=\"#9A7B33\" />\n              <stop offset=\"100%\" stopColor=\"#EBCF8A\" />\n            </linearGradient>\n          </defs>\n          {stats.days.map((d, i) => {\n            const h = d.n === 0 ? 0.6 : (d.n / maxDay) * 34;\n            return <rect key={i} x={i * 10 + 2} y={38 - h} width=\"6\" height={h} rx=\"1.5\" fill={d.n === 0 ? 'rgba(201,163,78,.18)' : 'url(#goldbar)'}><title>{`${d.label}: ${d.n}`}</title></rect>;\n          })}\n        </svg>\n        <div className=\"spark-axis\">\n          <span>{stats.days[0]?.label}</span>\n          <span>{stats.days[stats.days.length - 1]?.label}</span>\n        </div>\n      </div>\n\n      <div className=\"panel rise-2\">\n        <h2>Most pledged for</h2>\n        {stats.topNames.length === 0 ? (\n          <div className=\"empty\">No active pledges yet.</div>\n        ) : (\n          <ol className=\"toplist\">\n            {stats.topNames.map((t) => (\n              <li key={`${t.name}-${t.ded}`}>\n                <span className=\"tl-name\" dir=\"rtl\">{t.name}</span>\n                <span className=\"tl-meta\">\n                  <span className={`tag ${t.ded === 'refuah' ? 'approved' : 'pending'}`}>\n                    {t.ded === 'refuah' ? 'refuah' : 'zecher'}\n                  </span>\n                  <b>{t.minutes}</b> min · {t.count} {t.count === 1 ? 'pledge' : 'pledges'}\n                </span>\n              </li>\n            ))}\n          </ol>\n        )}\n      </div>\n    </>\n  );\n}\n\nfunction Stat({ label, value, hero }) {\n  return (\n    <div className={`stat ${hero ? 'hero-stat' : ''}`}>\n      <div className=\"stat-val\">{value}</div>\n      <div className=\"stat-lbl\">{label}</div>\n    </div>\n  );\n}\n",
+              "truncated": false,
+              "size": 34115
+            }
+          }
+        },
+        {
+          "type": "tool-result",
+          "toolCallId": "call_01_zsovyNl1R4ziuwOxgY8a7519",
+          "toolName": "fs-read-file",
+          "output": {
+            "type": "json",
+            "value": {
+              "path": "C:\\Users\\Boruch\\tosfos-shabbos-zechus-board\\app\\api\\admin\\route.js",
+              "content": "import { NextResponse } from 'next/server';\nimport {\n  listAll, setStatus, getSetting, setSetting,\n  listSuggestions, setSuggestionStatus, updatePledge,\n} from '@/lib/db';\nimport { validatePledgeFields } from '@/lib/pledges';\nimport { FEATURED_KEY } from '@/lib/settings';\n\nexport const dynamic = 'force-dynamic';\n\nconst ADMIN_CODE = process.env.ADMIN_CODE || '';\n\n// The admin code may arrive as an `x-admin-code` header (GET) or in the JSON\n// body (POST). If ADMIN_CODE is unset the admin surface is locked (deny all)\n// rather than left open.\nfunction authorized(provided) {\n  if (!ADMIN_CODE) return false;\n  return String(provided ?? '') === ADMIN_CODE;\n}\n\n/**\n * GET /api/admin  (auth via x-admin-code header)\n * Every pledge, newest first, plus current settings.\n */\nexport async function GET(request) {\n  if (!authorized(request.headers.get('x-admin-code'))) {\n    return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 });\n  }\n  try {\n    // A missing table (migration not yet run) shouldn't take down the panel.\n    const [pledges, featured, suggestions] = await Promise.all([\n      listAll(),\n      getSetting(FEATURED_KEY, null).catch(() => null),\n      listSuggestions().catch(() => []),\n    ]);\n    return NextResponse.json({ pledges, featured, suggestions });\n  } catch {\n    return NextResponse.json({ error: 'Could not load pledges.' }, { status: 500 });\n  }\n}\n\n/**\n * POST /api/admin\n *   { adminCode, action: 'moderate', id, status }\n *   { adminCode, action: 'feature', refuahName, refuahNameEnglish?, dedicationType?, note? }\n *   { adminCode, action: 'unfeature' }\n * `action` defaults to 'moderate' for backward compatibility.\n */\nexport async function POST(request) {\n  let body;\n  try {\n    body = await request.json();\n  } catch {\n    return NextResponse.json({ error: 'Invalid request body.' }, { status: 400 });\n  }\n\n  if (!authorized(body.adminCode)) {\n    return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 });\n  }\n\n  const action = String(body.action || 'moderate');\n\n  if (action === 'unfeature') {\n    try {\n      await setSetting(FEATURED_KEY, null);\n      return NextResponse.json({ featured: null });\n    } catch {\n      return NextResponse.json({ error: 'Could not clear the spotlight.' }, { status: 500 });\n    }\n  }\n\n  if (action === 'update') {\n    const id = String(body.id ?? '').trim();\n    if (!id) return NextResponse.json({ error: 'Missing pledge id.' }, { status: 400 });\n\n    // Exactly the rules the public form enforces — no community code needed,\n    // since the admin code already authorised this request.\n    const result = validatePledgeFields(body);\n    if (!result.ok) {\n      return NextResponse.json({ error: result.error }, { status: 400 });\n    }\n\n    try {\n      const updated = await updatePledge(id, result.value);\n      if (!updated) return NextResponse.json({ error: 'Pledge not found.' }, { status: 404 });\n      return NextResponse.json({ pledge: updated });\n    } catch {\n      return NextResponse.json({ error: 'Could not update pledge.' }, { status: 500 });\n    }\n  }\n\n  if (action === 'suggestion') {\n    const id = String(body.id ?? '').trim();\n    const status = String(body.status ?? '').trim();\n    if (!id) return NextResponse.json({ error: 'Missing suggestion id.' }, { status: 400 });\n    if (!['new', 'handled', 'dismissed'].includes(status)) {\n      return NextResponse.json(\n        { error: 'Status must be one of: new, handled, dismissed.' },\n        { status: 400 }\n      );\n    }\n    try {\n      const updated = await setSuggestionStatus(id, status);\n      if (!updated) return NextResponse.json({ error: 'Suggestion not found.' }, { status: 404 });\n      return NextResponse.json({ suggestion: updated });\n    } catch {\n      return NextResponse.json({ error: 'Could not update suggestion.' }, { status: 500 });\n    }\n  }\n\n  if (action === 'feature') {\n    const refuahName = String(body.refuahName ?? '').trim();\n    if (!refuahName) {\n      return NextResponse.json({ error: 'Missing name to feature.' }, { status: 400 });\n    }\n    if (refuahName.length > 120) {\n      return NextResponse.json({ error: 'Name is too long.' }, { status: 400 });\n    }\n    const note = String(body.note ?? '').trim().slice(0, 200) || null;\n    const dedicationType = body.dedicationType === 'zecher' ? 'zecher' : 'refuah';\n    const featured = {\n      refuahName,\n      refuahNameEnglish: String(body.refuahNameEnglish ?? '').trim() || null,\n      dedicationType,\n      note,\n      setAt: new Date().toISOString(),\n    };\n    try {\n      await setSetting(FEATURED_KEY, featured);\n      return NextResponse.json({ featured });\n    } catch {\n      return NextResponse.json({ error: 'Could not set the spotlight.' }, { status: 500 });\n    }\n  }\n\n  // --- moderate ---\n  const id = String(body.id ?? '').trim();\n  const status = String(body.status ?? '').trim();\n\n  if (!id) return NextResponse.json({ error: 'Missing pledge id.' }, { status: 400 });\n  if (status !== 'approved' && status !== 'rejected') {\n    return NextResponse.json(\n      { error: 'Status must be one of: approved, rejected.' },\n      { status: 400 }\n    );\n  }\n\n  try {\n    const updated = await setStatus(id, status);\n    if (!updated) return NextResponse.json({ error: 'Pledge not found.' }, { status: 404 });\n    return NextResponse.json({ pledge: updated });\n  } catch {\n    return NextResponse.json({ error: 'Could not update pledge.' }, { status: 500 });\n  }\n}\n",
+              "truncated": false,
+              "size": 5437
+            }
+          }
+        },
+        {
+          "type": "tool-result",
+          "toolCallId": "call_02_PlIKCH0b8Pm7mniVUADl3258",
+          "toolName": "fs-read-file",
+          "output": {
+            "type": "json",
+            "value": {
+              "path": "C:\\Users\\Boruch\\tosfos-shabbos-zechus-board\\lib\\pledges.js",
+              "content": "// Pledge domain logic: validation, expiry computation, and wall grouping.\n// Enforced server-side on every write (the client UI mirrors them only for UX).\n//\n// A pledge has two independent ends:\n//   BEFORE Shabbos — accepting Shabbos early by `beforeMinutes`.\n//   AFTER  Shabbos — holding Shabbos until `afterBaseMinutes` past shkia,\n//                    plus `afterExtraMinutes` added on top.\n// A pledge may be before-only, after-only, or both. The stored\n// `duration_minutes` is the TOTAL of all pledged minutes.\n\nexport const COMMUNITY_CODE = process.env.COMMUNITY_CODE || '235';\n\nexport const FIELD_MIN = 18; // minimum for the after base\nexport const FIELD_MAX = 180; // max for any single field\nexport const WEEKS_MIN = 1;\nexport const WEEKS_MAX = 4;\n\nexport const AFTER_PRESETS = [50, 60, 72];\nexport const AFTER_EXTRA_DEFAULT = 10;\nexport const DEDICATION_TYPES = ['refuah', 'zecher'];\nexport const TEHILLIM_MAX = 200;\n\nconst EMAIL_RE = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;\n\n/** Next upcoming Friday at 00:00 UTC (\"upcoming\" = today if today is Friday). */\nexport function nextFriday(from = new Date()) {\n  const d = new Date(Date.UTC(from.getUTCFullYear(), from.getUTCMonth(), from.getUTCDate()));\n  const delta = (5 - d.getUTCDay() + 7) % 7;\n  d.setUTCDate(d.getUTCDate() + delta);\n  return d;\n}\n\n/** start = next upcoming Friday; end = start + weeks*7 days. */\nexport function computeWindow(weeks, from = new Date()) {\n  const startDate = nextFriday(from);\n  const endDate = new Date(startDate);\n  endDate.setUTCDate(endDate.getUTCDate() + weeks * 7);\n  return { startDate, endDate };\n}\n\n// COUNTING MODEL — \"extra only\".\n// `afterBaseMinutes` is the person's USUAL Shabbos end time (their baseline —\n// what they keep anyway), so it is stored and displayed for context but is\n// NEVER counted. Only genuinely added minutes count:\n//     extra = beforeMinutes + afterExtraMinutes\n// e.g. 72 base + 10 on top + 10 early = 20 extra (not 92).\n\n/** Counted (extra) minutes per week for a set of components. */\nexport function pledgeExtra({ beforeMinutes = 0, afterExtraMinutes = 0 }) {\n  return (beforeMinutes || 0) + (afterExtraMinutes || 0);\n}\n\n/** Counted (extra) minutes for a stored row (snake_case). */\nexport function rowExtraMinutes(p) {\n  if (!p) return 0;\n  // Deliberately no fallback to the legacy duration_minutes column: for rows\n  // written before this model it held baseline+extra, which would over-count.\n  return (p.before_minutes || 0) + (p.after_extra_minutes || 0);\n}\n\n/** The person's usual Shabbos end time, in minutes past shkia (context only). */\nexport function rowBaseline(p) {\n  return p?.after_base_minutes ?? null;\n}\n\n/**\n * Render a name as \"[name] בן/בת [mother]\" when a mother's name is on file.\n * Older pledges often have the full construction typed into refuah_name\n * already, so with no mother's name we return the name untouched.\n * Accepts either a DB row (snake_case) or form values (camelCase).\n */\nexport function formatRefuahName(p) {\n  if (!p) return '';\n  const name = p.refuah_name ?? p.refuahName ?? '';\n  const mother = p.refuah_mother_name ?? p.refuahMotherName ?? null;\n  const relation = p.refuah_relation ?? p.refuahRelation ?? 'ben';\n  if (!mother) return name;\n  return `${name} ${relation === 'bas' ? 'בת' : 'בן'} ${mother}`;\n}\n\n/**\n * Pull recognisable perek numbers out of a free-text Tehillim commitment, so\n * \"20, 30, 121\" can be rendered as links. Anything outside 1–150 isn't a perek,\n * and text with no numbers at all (\"כל ספר א\") yields none — callers then show\n * the raw text instead rather than dropping what the person actually wrote.\n * Returns numbers in the order written, de-duplicated.\n */\nexport function parseTehillim(text) {\n  if (!text) return [];\n  const seen = new Set();\n  for (const m of String(text).matchAll(/\\d+/g)) {\n    const n = Number(m[0]);\n    if (n >= 1 && n <= 150) seen.add(n);\n  }\n  return Array.from(seen);\n}\n\nfunction intOrNull(v) {\n  if (v === null || v === undefined || v === '') return null;\n  const n = Number(v);\n  return Number.isInteger(n) ? n : NaN;\n}\n\n/**\n * Validate and normalize an incoming pledge payload.\n * Returns { ok: true, value } or { ok: false, error, code?, spam? }.\n */\nexport function validatePledge(input, opts = {}) {\n  const body = input || {};\n\n  // 0. Spam honeypot — a hidden field real users never fill.\n  if (String(body.hp_field ?? '').trim()) {\n    return { ok: false, error: 'Submission could not be processed.', spam: true };\n  }\n\n  // 1. Community code gate.\n  const code = String(body.communityCode ?? body.code ?? '').trim();\n  if (code !== COMMUNITY_CODE) {\n    return { ok: false, error: 'Invalid community code.', code: 'BAD_CODE' };\n  }\n\n  return validatePledgeFields(body, opts);\n}\n\n/**\n * Field-level validation, with no community-code check. Shared by the public\n * form (via validatePledge) and the admin edit, so both enforce identical rules.\n */\nexport function validatePledgeFields(input, opts = {}) {\n  const now = opts.now || new Date();\n  const body = input || {};\n\n  // 2. refuahName required.\n  const refuahName = String(body.refuahName ?? '').trim();\n  if (!refuahName) return { ok: false, error: 'A name for the dedication is required.' };\n  if (refuahName.length > 120) return { ok: false, error: 'Name is too long.' };\n\n  // 3. refuahNameEnglish optional.\n  const englishRaw = String(body.refuahNameEnglish ?? '').trim();\n  const refuahNameEnglish = englishRaw || null;\n  if (refuahNameEnglish && refuahNameEnglish.length > 120) {\n    return { ok: false, error: 'English name is too long.' };\n  }\n\n  // 4. dedicationType.\n  const dedicationType = String(body.dedicationType ?? 'refuah').trim();\n  if (!DEDICATION_TYPES.includes(dedicationType)) {\n    return { ok: false, error: 'Invalid dedication type.' };\n  }\n\n  // 4b. Mother's name + ben/bas — what the Mi Shebeirach needs. Optional, so\n  // older pledges and l'zecher pledges still validate.\n  const motherRaw = String(body.refuahMotherName ?? '').trim();\n  const refuahMotherName = motherRaw || null;\n  if (refuahMotherName && refuahMotherName.length > 120) {\n    return { ok: false, error: \"Mother's name is too long.\" };\n  }\n  const relRaw = String(body.refuahRelation ?? '').trim();\n  let refuahRelation = relRaw || null;\n  if (refuahRelation && !['ben', 'bas'].includes(refuahRelation)) {\n    return { ok: false, error: 'Relation must be ben or bas.' };\n  }\n  // A mother's name is only meaningful alongside ben/bas; default to ben so the\n  // name still renders rather than silently dropping the mother's name.\n  if (refuahMotherName && !refuahRelation) refuahRelation = 'ben';\n\n  // 4c. Tehillim the pledger is taking on. Optional and free-text — this is a\n  // personal kabbalah, not a fixed list, so we store what they wrote.\n  const tehillimRaw = String(body.tehillimChapters ?? '').trim();\n  const tehillimChapters = tehillimRaw || null;\n  if (tehillimChapters && tehillimChapters.length > TEHILLIM_MAX) {\n    return { ok: false, error: 'The Tehillim you entered is too long.' };\n  }\n\n  // 5. AFTER Shabbos: base (optional) + extra on top.\n  const afterBaseRaw = intOrNull(body.afterBaseMinutes);\n  if (Number.isNaN(afterBaseRaw)) {\n    return { ok: false, error: 'After-Shabbos minutes must be a whole number.' };\n  }\n  const afterBaseMinutes = afterBaseRaw;\n  if (afterBaseMinutes !== null && (afterBaseMinutes < FIELD_MIN || afterBaseMinutes > FIELD_MAX)) {\n    return {\n      ok: false,\n      error: `Holding Shabbos later must be between ${FIELD_MIN} and ${FIELD_MAX} minutes.`,\n    };\n  }\n\n  const afterExtraRaw = intOrNull(body.afterExtraMinutes);\n  if (Number.isNaN(afterExtraRaw)) {\n    return { ok: false, error: 'The added minutes must be a whole number.' };\n  }\n  let afterExtraMinutes = afterExtraRaw === null ? 0 : afterExtraRaw;\n  if (afterExtraMinutes < 0 || afterExtraMinutes > FIELD_MAX) {\n    return { ok: false, error: `Added minutes must be between 0 and ${FIELD_MAX}.` };\n  }\n  // \"Add on top\" only means something when there's an after-Shabbos pledge.\n  if (afterBaseMinutes === null && afterExtraMinutes > 0) {\n    return {\n      ok: false,\n      error: 'Choose how late you hold Shabbos before adding minutes on top.',\n    };\n  }\n\n  // 6. BEFORE Shabbos: optional early acceptance.\n  const beforeRaw = intOrNull(body.beforeMinutes);\n  if (Number.isNaN(beforeRaw)) {\n    return { ok: false, error: 'Early minutes must be a whole number.' };\n  }\n  const beforeMinutes = beforeRaw === null ? 0 : beforeRaw;\n  if (beforeMinutes < 0 || beforeMinutes > FIELD_MAX) {\n    return { ok: false, error: `Early minutes must be between 0 and ${FIELD_MAX}.` };\n  }\n\n  // 7. A pledge must actually add time. The after-Shabbos base is the person's\n  // usual end time, so on its own it adds nothing.\n  if (beforeMinutes + afterExtraMinutes === 0) {\n    return {\n      ok: false,\n      error:\n        'Please add at least a minute — either on top of your usual Shabbos end time, or before Shabbos.',\n    };\n  }\n\n  // 8. weeks.\n  const weeks = Number(body.weeks);\n  if (!Number.isInteger(weeks)) return { ok: false, error: 'Weeks must be a whole number.' };\n  if (weeks < WEEKS_MIN || weeks > WEEKS_MAX) {\n    return { ok: false, error: `Weeks must be between ${WEEKS_MIN} and ${WEEKS_MAX}.` };\n  }\n\n  // 9. pledgerName optional.\n  const pledgerRaw = String(body.pledgerName ?? '').trim();\n  const pledgerName = pledgerRaw || null;\n  if (pledgerName && pledgerName.length > 120) return { ok: false, error: 'Your name is too long.' };\n\n  // 10. email optional (kept private).\n  const emailRaw = String(body.email ?? '').trim().toLowerCase();\n  let email = null;\n  if (emailRaw) {\n    if (emailRaw.length > 254 || !EMAIL_RE.test(emailRaw)) {\n      return { ok: false, error: 'Please enter a valid email address.' };\n    }\n    email = emailRaw;\n  }\n\n  const { startDate, endDate } = computeWindow(weeks, now);\n  // Stored duration_minutes is the COUNTED (extra) total, not baseline+extra.\n  const durationMinutes = pledgeExtra({ beforeMinutes, afterExtraMinutes });\n\n  return {\n    ok: true,\n    value: {\n      refuahName,\n      refuahNameEnglish,\n      refuahMotherName,\n      refuahRelation,\n      dedicationType,\n      tehillimChapters,\n      beforeMinutes,\n      afterBaseMinutes,\n      afterExtraMinutes,\n      durationMinutes, // stored total\n      weeks,\n      pledgerName,\n      email,\n      startDate,\n      endDate,\n    },\n  };\n}\n\n/**\n * Group approved pledges for the wall by refuah name + dedication type.\n * Carries a breakdown so cards can show both ends. Email is never surfaced.\n */\nexport function groupForWall(pledges) {\n  const groups = new Map();\n\n  for (const p of pledges || []) {\n    const dedication = p.dedication_type || 'refuah';\n    // Mother's name is part of the identity — two people can share a first name.\n    const key = `${p.refuah_name}\u0000${p.refuah_mother_name || ''}\u0000${dedication}`;\n    if (!groups.has(key)) {\n      groups.set(key, {\n        refuahName: p.refuah_name,\n        refuahNameEnglish: p.refuah_name_english || null,\n        refuahMotherName: p.refuah_mother_name || null,\n        refuahRelation: p.refuah_relation || null,\n        displayName: formatRefuahName(p),\n        dedicationType: dedication,\n        totalMinutesPerWeek: 0, // COUNTED extra only\n        beforeMinutes: 0,\n        afterExtraMinutes: 0,\n        // Baselines vary per person, so summing them would be meaningless —\n        // carry the range instead, purely as context.\n        baselineMin: null,\n        baselineMax: null,\n        pledgeCount: 0,\n        nearestEnd: null,\n        pledgers: [],\n        // Tehillim is per pledge, but a card is a whole name-group — so carry\n        // every distinct commitment made for this name, attributed where the\n        // pledger gave a name. Empty when nobody took Tehillim on.\n        tehillim: [],\n      });\n    }\n    const g = groups.get(key);\n    g.totalMinutesPerWeek += rowExtraMinutes(p);\n    g.beforeMinutes += p.before_minutes || 0;\n    g.afterExtraMinutes += p.after_extra_minutes || 0;\n    const base = p.after_base_minutes;\n    if (base != null) {\n      g.baselineMin = g.baselineMin === null ? base : Math.min(g.baselineMin, base);\n      g.baselineMax = g.baselineMax === null ? base : Math.max(g.baselineMax, base);\n    }\n    g.pledgeCount += 1;\n    if (!g.refuahNameEnglish && p.refuah_name_english) g.refuahNameEnglish = p.refuah_name_english;\n    // Prefer whichever record actually carries the mother's name.\n    if (!g.refuahMotherName && p.refuah_mother_name) {\n      g.refuahMotherName = p.refuah_mother_name;\n      g.refuahRelation = p.refuah_relation || 'ben';\n      g.displayName = formatRefuahName(p);\n    }\n    const end = new Date(p.end_date);\n    if (g.nearestEnd === null || end < g.nearestEnd) g.nearestEnd = end;\n    if (p.pledger_name) g.pledgers.push(p.pledger_name);\n\n    const tehillim = (p.tehillim_chapters || '').trim();\n    // Two people who both took \"20, 30\" shouldn't print twice — but keep an\n    // attributed entry over an anonymous duplicate, so credit isn't lost.\n    if (tehillim) {\n      const dupe = g.tehillim.find((t) => t.text === tehillim);\n      if (!dupe) g.tehillim.push({ text: tehillim, pledger: p.pledger_name || null });\n      else if (!dupe.pledger && p.pledger_name) dupe.pledger = p.pledger_name;\n    }\n  }\n\n  const list = Array.from(groups.values()).map((g) => ({\n    ...g,\n    nearestEnd: g.nearestEnd ? g.nearestEnd.toISOString() : null,\n  }));\n\n  list.sort((a, b) => {\n    if (b.totalMinutesPerWeek !== a.totalMinutesPerWeek) {\n      return b.totalMinutesPerWeek - a.totalMinutesPerWeek;\n    }\n    if (!a.nearestEnd) return 1;\n    if (!b.nearestEnd) return -1;\n    return new Date(a.nearestEnd) - new Date(b.nearestEnd);\n  });\n\n  return list;\n}\n\n/** Sum of all pledged minutes-per-week across groups. */\nexport function totalMinutesPerWeek(groups) {\n  return (groups || []).reduce((s, g) => s + (g.totalMinutesPerWeek || 0), 0);\n}\n",
+              "truncated": false,
+              "size": 13939
+            }
+          }
+        }
+      ],
+      "id": "954e4043-a061-43a5-b144-fcfada11ca9a",
+      "promptContext": {
+        "id": "7db69fe7-2df8-4476-98f4-3e940913516e"
+      },
+      "timestamp": 1784602468042
+    },
+    {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "reasoning",
+          "text": "Wait — the edit functionality already exists! Looking at the admin page code:\n\n1. The `EditPledge` component already exists with full editing capabilities for name (Hebrew), English name, mother's name, relation, dedication type, tehillim, before/after minutes.\n2. The `updatePledge` function is already imported from `@/lib/db` in the admin API route.\n3. The `action: 'update'` case is already handled in the admin route.\n\nSo the admin edit tool already exists! Let me check the `lib/db.js` to see if `updatePledge` is implemented there."
+        },
+        {
+          "type": "text",
+          "text": "The admin already has an edit feature! Let me verify the `updatePledge` function in the DB layer."
+        },
+        {
+          "type": "tool-call",
+          "toolCallId": "call_00_7WvmD1Dl5lQq7AadDiEY5547",
+          "toolName": "fs-read-file",
+          "input": {
+            "path": "C:\\Users\\Boruch\\tosfos-shabbos-zechus-board\\lib\\db.js"
+          }
+        }
+      ],
+      "id": "d0a47541-eb48-47e0-87e6-303dbc08601c",
+      "usageReport": {
+        "model": "deepseek/deepseek-v4-pro",
+        "sentTokens": 17109,
+        "receivedTokens": 219,
+        "cacheReadTokens": 31232,
+        "messageCost": 0.0077461610000000005,
+        "agentTotalCost": 0.7097143319999998
+      },
+      "promptContext": {
+        "id": "7db69fe7-2df8-4476-98f4-3e940913516e"
+      },
+      "timestamp": 1784602473331
+    },
+    {
+      "role": "tool",
+      "content": [
+        {
+          "type": "tool-result",
+          "toolCallId": "call_00_7WvmD1Dl5lQq7AadDiEY5547",
+          "toolName": "fs-read-file",
+          "output": {
+            "type": "json",
+            "value": {
+              "path": "C:\\Users\\Boruch\\tosfos-shabbos-zechus-board\\lib\\db.js",
+              "content": "import { getSupabase, isSupabaseConfigured } from './supabase';\n\n// Data-access layer for pledges.\n//\n// PRODUCTION: backed by Supabase Postgres (see supabase/migrations).\n// LOCAL DEV FALLBACK: if SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY are unset, an\n// in-memory store is used so the app runs with `npm run dev` out of the box.\n// The fallback is process-lifetime only and is NEVER used when Supabase env\n// vars are present (including on Vercel).\n\nconst TABLE = 'pledges';\nexport const VALID_STATUSES = ['pending', 'approved', 'rejected'];\n\n// ---- In-memory dev fallback -------------------------------------------------\nconst mem = (globalThis.__pledgeMem ||= { rows: [] });\n\nfunction memId() {\n  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {\n    const r = (Math.random() * 16) | 0;\n    const v = c === 'x' ? r : (r & 0x3) | 0x8;\n    return v.toString(16);\n  });\n}\n\n// ---- Row mapping ------------------------------------------------------------\nfunction toRow(value, { status, source }) {\n  return {\n    refuah_name: value.refuahName,\n    refuah_name_english: value.refuahNameEnglish,\n    refuah_mother_name: value.refuahMotherName ?? null,\n    refuah_relation: value.refuahRelation ?? null,\n    dedication_type: value.dedicationType || 'refuah',\n    tehillim_chapters: value.tehillimChapters ?? null,\n    before_minutes: value.beforeMinutes || 0,\n    after_base_minutes: value.afterBaseMinutes ?? null,\n    after_extra_minutes: value.afterExtraMinutes || 0,\n    duration_minutes: value.durationMinutes, // stored total (both ends)\n    weeks: value.weeks,\n    pledger_name: value.pledgerName,\n    email: value.email || null,\n    start_date: value.startDate.toISOString(),\n    end_date: value.endDate.toISOString(),\n    status,\n    source,\n  };\n}\n\n/** Strip private fields for any public-facing payload. */\nexport function toPublic(row) {\n  if (!row) return row;\n  const { email, ...rest } = row;\n  return rest;\n}\n\n// ---- Public API -------------------------------------------------------------\n\nexport async function insertPledge(value, { status = 'approved', source = 'web' } = {}) {\n  const supabase = getSupabase();\n  const row = toRow(value, { status, source });\n\n  if (!supabase) {\n    const stored = { id: memId(), created_at: new Date().toISOString(), reminder_sent_at: null, ...row };\n    mem.rows.push(stored);\n    return stored;\n  }\n\n  const { data, error } = await supabase.from(TABLE).insert(row).select().single();\n  if (error) throw new Error(error.message);\n  return data;\n}\n\n/** Approved, not-yet-expired pledges for the public wall. */\nexport async function listApprovedActive(now = new Date()) {\n  const supabase = getSupabase();\n  const nowIso = now.toISOString();\n\n  if (!supabase) {\n    return mem.rows\n      .filter((r) => r.status === 'approved' && r.end_date > nowIso)\n      .sort((a, b) => new Date(a.end_date) - new Date(b.end_date));\n  }\n\n  const { data, error } = await supabase\n    .from(TABLE)\n    .select('*')\n    .eq('status', 'approved')\n    .gt('end_date', nowIso)\n    .order('end_date', { ascending: true });\n  if (error) throw new Error(error.message);\n  return data || [];\n}\n\n/** All pledges, newest first — for the admin moderation queue. */\nexport async function listAll() {\n  const supabase = getSupabase();\n\n  if (!supabase) {\n    return [...mem.rows].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));\n  }\n\n  const { data, error } = await supabase\n    .from(TABLE)\n    .select('*')\n    .order('created_at', { ascending: false });\n  if (error) throw new Error(error.message);\n  return data || [];\n}\n\n/** Update a pledge's moderation status. */\nexport async function setStatus(id, status) {\n  if (!VALID_STATUSES.includes(status)) throw new Error('Invalid status.');\n  const supabase = getSupabase();\n\n  if (!supabase) {\n    const row = mem.rows.find((r) => r.id === id);\n    if (!row) return null;\n    row.status = status;\n    return row;\n  }\n\n  const { data, error } = await supabase\n    .from(TABLE)\n    .update({ status })\n    .eq('id', id)\n    .select()\n    .single();\n  if (error) {\n    if (error.code === 'PGRST116') return null;\n    throw new Error(error.message);\n  }\n  return data;\n}\n\n/**\n * Admin edit: overwrite a pledge's editable fields. `value` comes from the same\n * validator the public form uses, so the rules can't drift apart. The pledge's\n * dates, status, source and email are deliberately untouched.\n */\nexport async function updatePledge(id, value) {\n  const patch = {\n    refuah_name: value.refuahName,\n    refuah_name_english: value.refuahNameEnglish,\n    refuah_mother_name: value.refuahMotherName ?? null,\n    refuah_relation: value.refuahRelation ?? null,\n    dedication_type: value.dedicationType || 'refuah',\n    tehillim_chapters: value.tehillimChapters ?? null,\n    before_minutes: value.beforeMinutes || 0,\n    after_base_minutes: value.afterBaseMinutes ?? null,\n    after_extra_minutes: value.afterExtraMinutes || 0,\n    duration_minutes: value.durationMinutes,\n  };\n\n  const supabase = getSupabase();\n\n  if (!supabase) {\n    const row = mem.rows.find((r) => r.id === id);\n    if (!row) return null;\n    Object.assign(row, patch);\n    return row;\n  }\n\n  const { data, error } = await supabase\n    .from(TABLE)\n    .update(patch)\n    .eq('id', id)\n    .select()\n    .single();\n  if (error) {\n    if (error.code === 'PGRST116') return null;\n    throw new Error(error.message);\n  }\n  return data;\n}\n\n/**\n * Approved pledges with an email, ending within `windowHours`, that haven't\n * been reminded yet. Used by the reminder cron.\n */\nexport async function listPledgesNeedingReminder(now = new Date(), windowHours = 36) {\n  const nowIso = now.toISOString();\n  const untilIso = new Date(now.getTime() + windowHours * 3600 * 1000).toISOString();\n  const supabase = getSupabase();\n\n  if (!supabase) {\n    return mem.rows.filter(\n      (r) =>\n        r.status === 'approved' &&\n        r.email &&\n        !r.reminder_sent_at &&\n        r.end_date > nowIso &&\n        r.end_date <= untilIso\n    );\n  }\n\n  const { data, error } = await supabase\n    .from(TABLE)\n    .select('*')\n    .eq('status', 'approved')\n    .not('email', 'is', null)\n    .is('reminder_sent_at', null)\n    .gt('end_date', nowIso)\n    .lte('end_date', untilIso);\n  if (error) throw new Error(error.message);\n  return data || [];\n}\n\n/** Mark a pledge's reminder as sent so it isn't emailed twice. */\nexport async function markReminderSent(id, now = new Date()) {\n  const supabase = getSupabase();\n  const stamp = now.toISOString();\n\n  if (!supabase) {\n    const row = mem.rows.find((r) => r.id === id);\n    if (row) row.reminder_sent_at = stamp;\n    return;\n  }\n\n  const { error } = await supabase.from(TABLE).update({ reminder_sent_at: stamp }).eq('id', id);\n  if (error) throw new Error(error.message);\n}\n\n// ---- Suggestions ------------------------------------------------------------\n\nconst SUGGESTIONS_TABLE = 'suggestions';\nexport const SUGGESTION_STATUSES = ['new', 'handled', 'dismissed'];\nconst memSuggestions = (globalThis.__pledgeSuggestions ||= { rows: [] });\n\n/** Store a suggestion. `value` is a validated payload. */\nexport async function insertSuggestion(value) {\n  const supabase = getSupabase();\n  const row = {\n    body: value.body,\n    name: value.name || null,\n    email: value.email || null,\n    status: 'new',\n    source: value.source || 'web',\n  };\n\n  if (!supabase) {\n    const stored = { id: memId(), created_at: new Date().toISOString(), ...row };\n    memSuggestions.rows.push(stored);\n    return stored;\n  }\n\n  const { data, error } = await supabase.from(SUGGESTIONS_TABLE).insert(row).select().single();\n  if (error) throw new Error(error.message);\n  return data;\n}\n\n/** All suggestions, newest first — admin only. */\nexport async function listSuggestions() {\n  const supabase = getSupabase();\n\n  if (!supabase) {\n    return [...memSuggestions.rows].sort(\n      (a, b) => new Date(b.created_at) - new Date(a.created_at)\n    );\n  }\n\n  const { data, error } = await supabase\n    .from(SUGGESTIONS_TABLE)\n    .select('*')\n    .order('created_at', { ascending: false });\n  if (error) throw new Error(error.message);\n  return data || [];\n}\n\n/** Update a suggestion's status. */\nexport async function setSuggestionStatus(id, status) {\n  if (!SUGGESTION_STATUSES.includes(status)) throw new Error('Invalid status.');\n  const supabase = getSupabase();\n\n  if (!supabase) {\n    const row = memSuggestions.rows.find((r) => r.id === id);\n    if (!row) return null;\n    row.status = status;\n    return row;\n  }\n\n  const { data, error } = await supabase\n    .from(SUGGESTIONS_TABLE)\n    .update({ status })\n    .eq('id', id)\n    .select()\n    .single();\n  if (error) {\n    if (error.code === 'PGRST116') return null;\n    throw new Error(error.message);\n  }\n  return data;\n}\n\n// ---- Settings (key/value) ---------------------------------------------------\n\nconst SETTINGS_TABLE = 'app_settings';\nconst memSettings = (globalThis.__pledgeSettings ||= {});\n\n/** Read a setting's value, or `fallback` if unset. */\nexport async function getSetting(key, fallback = null) {\n  const supabase = getSupabase();\n\n  if (!supabase) {\n    return key in memSettings ? memSettings[key] : fallback;\n  }\n\n  const { data, error } = await supabase\n    .from(SETTINGS_TABLE)\n    .select('value')\n    .eq('key', key)\n    .maybeSingle();\n  if (error) throw new Error(error.message);\n  return data ? data.value : fallback;\n}\n\n/** Upsert a setting. Passing null removes it. */\nexport async function setSetting(key, value) {\n  const supabase = getSupabase();\n\n  if (!supabase) {\n    if (value === null) delete memSettings[key];\n    else memSettings[key] = value;\n    return value;\n  }\n\n  if (value === null) {\n    const { error } = await supabase.from(SETTINGS_TABLE).delete().eq('key', key);\n    if (error) throw new Error(error.message);\n    return null;\n  }\n\n  const { error } = await supabase\n    .from(SETTINGS_TABLE)\n    .upsert({ key, value, updated_at: new Date().toISOString() }, { onConflict: 'key' });\n  if (error) throw new Error(error.message);\n  return value;\n}\n\nexport { isSupabaseConfigured };\n",
+              "truncated": false,
+              "size": 10087
+            }
+          }
+        }
+      ],
+      "id": "e3628ee0-ec6f-4333-be6b-6eaeb7a6b88e",
+      "promptContext": {
+        "id": "7db69fe7-2df8-4476-98f4-3e940913516e"
+      },
+      "timestamp": 1784602473331
+    },
+    {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "reasoning",
+          "text": "The edit feature already exists completely! Looking at the code:\n\n1. **Admin page** (`app/admin/page.js`): Has a full `EditPledge` component with fields for Hebrew name, English name, mother's name, relation (ben/bas), dedication type, Tehillim, before minutes, base minutes, and extra minutes. There's even a Hebrew keyboard available in the editor. The \"Edit\" button is already on each pledge card.\n\n2. **Admin API** (`app/api/admin/route.js`): Has `action: 'update'` handled, calling `updatePledge(id, value)`.\n\n3. **DB layer** (`lib/db.js`): Has `updatePledge` that overwrites all editable fields.\n\n4. **Validation** (`lib/pledges.js`): `validatePledgeFields` is shared between the public form and admin edit.\n\nThe user said they need an admin tool to fix spelling mistakes and pledged time — **it's already built**. The admin panel at `/admin` already has an Edit button on every pledge that opens an inline editor with all fields editable.\n\nLet me just confirm with the user that this feature already exists and point them to it."
+        },
+        {
+          "type": "text",
+          "text": "The admin edit tool you're asking for **already exists**. On the admin page (`/admin`), every pledge card in the Queue tab already has an **Edit** button that opens a full inline editor:\n\n- Hebrew name (with Hebrew keyboard)\n- English name\n- Mother's name + ben/bas\n- Dedication type (refuah/zecher)\n- Tehillim chapters\n- Before-Shabbos minutes\n- Usual end time\n- On-top minutes\n- Shown running total of counted extra minutes\n\nIt's wired end-to-end: `EditPledge` component → `action: 'update'` in the admin API → `updatePledge()` in the DB → validated by the same `validatePledgeFields` the public form uses.\n\nTo use it: go to `/admin`, sign in, click the **Queue** tab, find the pledge, and click **Edit**. Make your changes and hit **Save changes**."
+        }
+      ],
+      "id": "c3efce89-aec9-41a6-9330-595cb6b07b0d",
+      "usageReport": {
+        "model": "deepseek/deepseek-v4-pro",
+        "sentTokens": 3301,
+        "receivedTokens": 445,
+        "cacheReadTokens": 48512,
+        "messageCost": 0.001998941,
+        "agentTotalCost": 0.7117132729999998
+      },
+      "promptContext": {
+        "id": "7db69fe7-2df8-4476-98f4-3e940913516e"
+      },
+      "timestamp": 1784602481809
+    },
+    {
+      "id": "5551d41a-f030-46c1-bb4f-ab5f1207b859",
+      "role": "user",
+      "content": "how do i get to the admin page",
+      "promptContext": {
+        "id": "5551d41a-f030-46c1-bb4f-ab5f1207b859"
+      },
+      "timestamp": 1784602509895
+    },
+    {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "reasoning",
+          "text": "The user is asking how to access the admin page on the live site. The deployed site is at https://shabboshemeilizok.com, so the admin page is at https://shabboshemeilizok.com/admin."
+        },
+        {
+          "type": "text",
+          "text": "Go to **https://shabboshemeilizok.com/admin** and enter your admin code."
+        }
+      ],
+      "id": "7f4eb692-04be-4da7-a582-4584f3f56051",
+      "usageReport": {
+        "model": "deepseek/deepseek-v4-pro",
+        "sentTokens": 46,
+        "receivedTokens": 74,
+        "cacheReadTokens": 52224,
+        "messageCost": 0.000273702,
+        "agentTotalCost": 0.7119869749999997
+      },
+      "promptContext": {
+        "id": "5551d41a-f030-46c1-bb4f-ab5f1207b859"
+      },
+      "timestamp": 1784602512981
+    },
+    {
+      "id": "9624004d-23a6-4c01-9091-057308194964",
+      "role": "user",
+      "content": "shkoich.",
+      "promptContext": {
+        "id": "9624004d-23a6-4c01-9091-057308194964"
+      },
+      "timestamp": 1784602919303
+    },
+    {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "reasoning",
+          "text": "The user said \"shkoich\" which is a Yiddish/Hebrew expression of gratitude (like \"thank you\" or \"yasher koach\"). They're thanking me. I should acknowledge briefly and close out."
+        },
+        {
+          "type": "text",
+          "text": "👍"
+        },
+        {
+          "type": "tool-call",
+          "toolCallId": "call_00_coey3XOsVJC2egq6Mgzx5151",
+          "toolName": "todo---clear_items",
+          "input": {}
+        }
+      ],
+      "id": "de7f062e-5ded-411f-befb-2b7725c7af4f",
+      "usageReport": {
+        "model": "deepseek/deepseek-v4-pro",
+        "sentTokens": 76,
+        "receivedTokens": 76,
+        "cacheReadTokens": 52224,
+        "messageCost": 0.000288492,
+        "agentTotalCost": 0.7122754669999998
+      },
+      "promptContext": {
+        "id": "9624004d-23a6-4c01-9091-057308194964"
+      },
+      "timestamp": 1784602923444
+    },
+    {
+      "role": "tool",
+      "content": [
+        {
+          "type": "tool-result",
+          "toolCallId": "call_00_coey3XOsVJC2egq6Mgzx5151",
+          "toolName": "todo---clear_items",
+          "output": {
+            "type": "text",
+            "value": "All todo items cleared successfully."
+          }
+        }
+      ],
+      "id": "e4eab5fc-d079-4308-8cef-e34c595507c3",
+      "promptContext": {
+        "id": "9624004d-23a6-4c01-9091-057308194964"
+      },
+      "timestamp": 1784602923444
+    },
+    {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "reasoning",
+          "text": "Done. The user's question was resolved - they now know how to access the admin page. No further action needed."
+        }
+      ],
+      "id": "4c8cef9f-202a-4bc5-96bc-5dbde9bddedd",
+      "usageReport": {
+        "model": "deepseek/deepseek-v4-pro",
+        "sentTokens": 41,
+        "receivedTokens": 25,
+        "cacheReadTokens": 52352,
+        "messageCost": 0.000229361,
+        "agentTotalCost": 0.7125048279999998
+      },
+      "promptContext": {
+        "id": "9624004d-23a6-4c01-9091-057308194964"
+      },
+      "timestamp": 1784602926160
+    }
+  ],
+  "contextFiles": []
+}

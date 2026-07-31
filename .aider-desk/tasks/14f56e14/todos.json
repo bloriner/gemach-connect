@@ -1,0 +1,29 @@
+{
+  "initialUserPrompt": "i created a gemach just to test it out. there is no option to put in hours or other details about the gemach....special instructions etc.",
+  "items": [
+    {
+      "name": "Add hours editor (7-day grid with time inputs + closed toggle)",
+      "completed": true
+    },
+    {
+      "name": "Add needs input (comma-separated textarea)",
+      "completed": true
+    },
+    {
+      "name": "Add pickup notes textarea",
+      "completed": true
+    },
+    {
+      "name": "Add dropoff/delivery/apptOnly toggle checkboxes",
+      "completed": true
+    },
+    {
+      "name": "Wire new fields into handleSubmit body",
+      "completed": true
+    },
+    {
+      "name": "Verify build succeeds",
+      "completed": true
+    }
+  ]
+}

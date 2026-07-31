@@ -1,0 +1,17 @@
+{
+  "initialUserPrompt": "Find email about Yehudis from camp SCHI in Gmail and fill out forms",
+  "items": [
+    {
+      "name": "Search Gmail for camp SCHI / Yehudis emails",
+      "completed": false
+    },
+    {
+      "name": "Read the relevant email and find forms",
+      "completed": false
+    },
+    {
+      "name": "Download/fill out the forms",
+      "completed": false
+    }
+  ]
+}

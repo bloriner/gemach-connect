@@ -1,0 +1,21 @@
+{
+  "id": "d84d3308",
+  "baseDir": "C:\\Users\\Boruch\\Desktop\\RESP",
+  "name": "i made a project https://shabboshemeilizok.com/",
+  "archived": true,
+  "aiderTotalCost": 0,
+  "agentTotalCost": 0,
+  "mainModel": "",
+  "currentMode": "agent",
+  "weakModelLocked": false,
+  "parentId": null,
+  "agentProfileId": "default",
+  "provider": "deepseek",
+  "model": "deepseek-v4-flash",
+  "workingMode": "local",
+  "createdAt": "2026-07-20T22:31:13.097Z",
+  "updatedAt": "2026-07-20T22:34:22.523Z",
+  "startedAt": "2026-07-20T22:31:13.099Z",
+  "state": "DONE",
+  "completedAt": "2026-07-20T22:31:13.357Z"
+}

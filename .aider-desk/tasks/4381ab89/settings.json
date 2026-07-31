@@ -1,0 +1,27 @@
+{
+  "id": "4381ab89",
+  "baseDir": "C:\\Users\\Boruch\\Desktop\\RESP",
+  "name": "Verify connector support for drive and email",
+  "archived": false,
+  "aiderTotalCost": 0,
+  "agentTotalCost": 0.052564471999999994,
+  "mainModel": "",
+  "currentMode": "agent",
+  "weakModelLocked": false,
+  "parentId": null,
+  "lastAgentProviderMetadata": {
+    "deepseek": {
+      "promptCacheHitTokens": 77440,
+      "promptCacheMissTokens": 137
+    }
+  },
+  "agentProfileId": "default",
+  "provider": "deepseek",
+  "model": "deepseek-v4-pro",
+  "workingMode": "local",
+  "updatedAt": "2026-07-14T17:06:12.269Z",
+  "createdAt": "2026-07-14T16:54:44.737Z",
+  "startedAt": "2026-07-14T17:06:01.358Z",
+  "state": "READY_FOR_REVIEW",
+  "completedAt": "2026-07-14T17:06:12.269Z"
+}

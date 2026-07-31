@@ -1,0 +1,27 @@
+{
+  "id": "99f7cdd1",
+  "baseDir": "C:\\Users\\Boruch\\Desktop\\RESP",
+  "name": "Audit response and verify feature interactions",
+  "archived": false,
+  "aiderTotalCost": 0,
+  "agentTotalCost": 0.31238463600000016,
+  "mainModel": "",
+  "currentMode": "agent",
+  "weakModelLocked": false,
+  "parentId": null,
+  "lastAgentProviderMetadata": {
+    "deepseek": {
+      "promptCacheHitTokens": 38144,
+      "promptCacheMissTokens": 90
+    }
+  },
+  "agentProfileId": "default",
+  "provider": "deepseek",
+  "model": "deepseek-v4-pro",
+  "workingMode": "local",
+  "updatedAt": "2026-07-21T03:23:34.909Z",
+  "createdAt": "2026-07-15T00:29:57.200Z",
+  "startedAt": "2026-07-21T03:23:09.395Z",
+  "state": "READY_FOR_REVIEW",
+  "completedAt": "2026-07-21T03:23:34.909Z"
+}

@@ -1,0 +1,27 @@
+{
+  "id": "c1c63202",
+  "baseDir": "C:\\Users\\Boruch\\Desktop\\RESP",
+  "name": "i made a project ",
+  "archived": false,
+  "aiderTotalCost": 0,
+  "agentTotalCost": 0.7125048279999998,
+  "mainModel": "",
+  "currentMode": "agent",
+  "weakModelLocked": false,
+  "parentId": null,
+  "lastAgentProviderMetadata": {
+    "deepseek": {
+      "promptCacheHitTokens": 52352,
+      "promptCacheMissTokens": 41
+    }
+  },
+  "agentProfileId": "default",
+  "provider": "deepseek",
+  "model": "deepseek-v4-pro",
+  "workingMode": "local",
+  "createdAt": "2026-07-20T22:34:41.176Z",
+  "updatedAt": "2026-07-21T03:02:16.084Z",
+  "startedAt": "2026-07-21T03:01:59.122Z",
+  "state": "DONE",
+  "completedAt": "2026-07-21T03:02:11.528Z"
+}

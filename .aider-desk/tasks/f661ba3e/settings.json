@@ -1,0 +1,27 @@
+{
+  "id": "f661ba3e",
+  "baseDir": "C:\\Users\\Boruch\\Desktop\\RESP",
+  "name": "on the tosfos shabbos project",
+  "archived": false,
+  "aiderTotalCost": 0,
+  "agentTotalCost": 0.8376110019999997,
+  "mainModel": "",
+  "currentMode": "agent",
+  "weakModelLocked": false,
+  "parentId": null,
+  "lastAgentProviderMetadata": {
+    "deepseek": {
+      "promptCacheHitTokens": 62464,
+      "promptCacheMissTokens": 435
+    }
+  },
+  "agentProfileId": "default",
+  "provider": "deepseek",
+  "model": "deepseek-v4-pro",
+  "workingMode": "local",
+  "createdAt": "2026-07-21T13:13:17.169Z",
+  "updatedAt": "2026-07-21T18:16:39.003Z",
+  "startedAt": "2026-07-21T18:15:29.260Z",
+  "state": "READY_FOR_REVIEW",
+  "completedAt": "2026-07-21T18:16:39.003Z"
+}

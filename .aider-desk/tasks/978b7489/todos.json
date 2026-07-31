@@ -1,0 +1,37 @@
+{
+  "initialUserPrompt": "wow. now i need you to add powerful features.....accounting. invoices....think of other stuff. make this the best thing since sliced bread",
+  "items": [
+    {
+      "name": "Add Expense model to Prisma schema + migrate",
+      "completed": true
+    },
+    {
+      "name": "Build Accounting Dashboard (P&L, revenue, expense charts)",
+      "completed": true
+    },
+    {
+      "name": "Build Expense Tracking page",
+      "completed": true
+    },
+    {
+      "name": "Build Calendar/Scheduling page",
+      "completed": true
+    },
+    {
+      "name": "Build Reports page (revenue by customer, crew performance)",
+      "completed": true
+    },
+    {
+      "name": "Build Customer Portal (public-facing)",
+      "completed": true
+    },
+    {
+      "name": "Enhance Invoicing (PDF API, payment tracking, detail view)",
+      "completed": true
+    },
+    {
+      "name": "Verify build succeeds",
+      "completed": true
+    }
+  ]
+}

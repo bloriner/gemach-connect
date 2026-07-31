@@ -1,0 +1,21 @@
+{
+  "initialUserPrompt": "the whole code input of 235 is confusing people. make a tab that says enter and allow people to just enter. i'll have to think of a clever waty to safeguard it...",
+  "items": [
+    {
+      "name": "Explore Tosfos Shabbos project - understand gate mechanism fully",
+      "completed": true
+    },
+    {
+      "name": "Plan: Simplify gate to a simple Enter button",
+      "completed": true
+    },
+    {
+      "name": "Implement the simplified gate",
+      "completed": true
+    },
+    {
+      "name": "Verify changes work correctly",
+      "completed": true
+    }
+  ]
+}

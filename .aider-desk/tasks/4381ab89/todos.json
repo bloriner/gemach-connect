@@ -1,0 +1,33 @@
+{
+  "initialUserPrompt": "all - build connectors for Google Drive, Gmail, and local file system as a global extension",
+  "items": [
+    {
+      "name": "Read extension interface types and folder template",
+      "completed": true
+    },
+    {
+      "name": "Create folder structure at ~/.aider-desk/extensions/connectors/",
+      "completed": true
+    },
+    {
+      "name": "Implement Google Drive connector (list, read, upload)",
+      "completed": true
+    },
+    {
+      "name": "Implement Gmail connector (list, search, read)",
+      "completed": true
+    },
+    {
+      "name": "Implement Local File System connector (browse, read outside project)",
+      "completed": true
+    },
+    {
+      "name": "Add config component for API keys and settings",
+      "completed": true
+    },
+    {
+      "name": "Verify extension structure is complete",
+      "completed": true
+    }
+  ]
+}

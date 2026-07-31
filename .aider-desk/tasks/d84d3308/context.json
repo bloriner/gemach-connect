@@ -1,0 +1,15 @@
+{
+  "version": 2,
+  "contextMessages": [
+    {
+      "id": "f08b82be-8396-484f-836b-d22dc278507b",
+      "role": "user",
+      "content": "i made a project https://shabboshemeilizok.com/    can you find it on my computer?",
+      "promptContext": {
+        "id": "f08b82be-8396-484f-836b-d22dc278507b"
+      },
+      "timestamp": 1784586673348
+    }
+  ],
+  "contextFiles": []
+}

@@ -1,0 +1,27 @@
+{
+  "id": "978b7489",
+  "baseDir": "C:\\Users\\Boruch\\Desktop\\RESP",
+  "name": "i want to create a",
+  "archived": false,
+  "aiderTotalCost": 0,
+  "agentTotalCost": 0.2042655310000001,
+  "mainModel": "",
+  "currentMode": "agent",
+  "weakModelLocked": false,
+  "parentId": null,
+  "lastAgentProviderMetadata": {
+    "deepseek": {
+      "promptCacheHitTokens": 70272,
+      "promptCacheMissTokens": 291
+    }
+  },
+  "agentProfileId": "default",
+  "provider": "deepseek",
+  "model": "deepseek-v4-pro",
+  "workingMode": "local",
+  "updatedAt": "2026-07-14T16:26:52.893Z",
+  "createdAt": "2026-07-14T14:29:29.525Z",
+  "startedAt": "2026-07-14T16:26:44.446Z",
+  "state": "READY_FOR_REVIEW",
+  "completedAt": "2026-07-14T16:26:52.893Z"
+}

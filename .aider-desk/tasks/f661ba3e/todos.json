@@ -1,0 +1,33 @@
+{
+  "initialUserPrompt": "build each UX improvement one after the other: 1) simplify after shabbos baseline, 2) surface email+group, 3) empty board examples, 4) wizard flow, 5) live card preview, 6) post-submit share, 7) auto-detect hebrew + voice",
+  "items": [
+    {
+      "name": "Simplify After Shabbos — add 'I dont know my baseline' skip",
+      "completed": true
+    },
+    {
+      "name": "Surface email + group name out of More Options",
+      "completed": true
+    },
+    {
+      "name": "Empty board ghost card examples",
+      "completed": true
+    },
+    {
+      "name": "Wizard / step-by-step form flow",
+      "completed": true
+    },
+    {
+      "name": "Live card preview while filling form",
+      "completed": true
+    },
+    {
+      "name": "Post-submit share + add another name",
+      "completed": true
+    },
+    {
+      "name": "Auto-detect Hebrew + voice input",
+      "completed": true
+    }
+  ]
+}

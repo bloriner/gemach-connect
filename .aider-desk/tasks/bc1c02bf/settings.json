@@ -1,0 +1,27 @@
+{
+  "id": "bc1c02bf",
+  "baseDir": "C:\\Users\\Boruch\\Desktop\\RESP",
+  "name": "i am using you aider",
+  "archived": false,
+  "aiderTotalCost": 0,
+  "agentTotalCost": 0.03418428159999999,
+  "mainModel": "",
+  "currentMode": "agent",
+  "weakModelLocked": false,
+  "parentId": null,
+  "lastAgentProviderMetadata": {
+    "deepseek": {
+      "promptCacheHitTokens": 85504,
+      "promptCacheMissTokens": 31
+    }
+  },
+  "agentProfileId": "default",
+  "provider": "deepseek",
+  "model": "deepseek-v4-flash",
+  "workingMode": "local",
+  "createdAt": "2026-07-28T21:04:47.571Z",
+  "updatedAt": "2026-07-28T21:50:15.470Z",
+  "startedAt": "2026-07-28T21:50:02.773Z",
+  "state": "MORE_INFO_NEEDED",
+  "completedAt": "2026-07-28T21:50:15.470Z"
+}
