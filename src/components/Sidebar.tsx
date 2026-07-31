@@ -33,13 +33,13 @@ export function Sidebar() {
   const { data: session } = useSession();
 
   return (
-    <aside className="flex h-full w-64 flex-shrink-0 flex-col border-r bg-white">
+    <aside className="flex h-full w-64 flex-shrink-0 flex-col border-r border-gray-800 bg-gray-900">
       {/* Logo */}
-      <div className="flex items-center gap-2 px-4 py-5 border-b">
+      <div className="flex items-center gap-2 px-4 py-5 border-b border-gray-800">
         <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary-600">
           <Heart className="h-5 w-5 text-white" />
         </div>
-        <span className="text-lg font-bold text-gray-900">Gemach Connect</span>
+        <span className="text-lg font-bold text-white">Gemach Connect</span>
       </div>
 
       {/* Navigation */}
@@ -52,8 +52,8 @@ export function Sidebar() {
               href={item.href}
               className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition ${
                 active
-                  ? "bg-primary-50 text-primary-700"
-                  : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                  ? "bg-gray-800 text-white"
+                  : "text-gray-400 hover:bg-gray-800 hover:text-gray-200"
               }`}
             >
               <item.icon className="h-5 w-5 flex-shrink-0" />
@@ -65,14 +65,14 @@ export function Sidebar() {
 
       {/* User */}
       {session?.user && (
-        <div className="border-t px-4 py-4 space-y-2">
+        <div className="border-t border-gray-800 px-4 py-4 space-y-3">
           <div className="text-sm">
-            <p className="font-medium text-gray-900 truncate">{session.user.name}</p>
+            <p className="font-medium text-gray-200 truncate">{session.user.name}</p>
             <p className="text-gray-500 truncate text-xs">{session.user.email}</p>
           </div>
           <button
             onClick={() => signOut({ callbackUrl: "/" })}
-            className="btn btn-ghost w-full text-sm"
+            className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-gray-400 transition hover:bg-gray-800 hover:text-gray-200"
           >
             <LogOut className="h-4 w-4" /> Sign Out
           </button>

@@ -2,11 +2,11 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Heart, Pencil, Trash2, Loader2 } from "lucide-react";
+import { Heart, Pencil, Trash2, Loader2, MapPin, Clock, Phone } from "lucide-react";
 import { toast } from "sonner";
 import { EmptyState } from "@/components/EmptyState";
 import { CardSkeleton } from "@/components/Skeleton";
-import { GemachCard } from "@/components/GemachCard";
+import { catOf } from "@/lib/utils";
 
 export default function MyGemachsPage() {
   const [gemachs, setGemachs] = useState<any[]>([]);
@@ -53,24 +53,36 @@ export default function MyGemachsPage() {
         />
       ) : (
         <div className="space-y-3">
-          {gemachs.map((g) => (
-            <div key={g.id} className="card p-5 flex items-center justify-between gap-4">
-              <div className="flex-1 min-w-0">
-                <GemachCard gemach={g} />
-              </div>
-              <div className="flex items-center gap-2 flex-shrink-0">
-                <Link href={`/dashboard/edit/${g.id}`} className="btn btn-ghost">
-                  <Pencil className="h-4 w-4" />
+          {gemachs.map((g) => {
+            const cat = catOf(g.category);
+            return (
+              <div key={g.id} className="card p-5 flex items-center justify-between gap-4">
+                <Link href={`/gemachs/${g.id}`} className="flex-1 min-w-0 hover:underline">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-semibold text-gray-900">{g.name}</h3>
+                      <span className={`badge ${cat.chip}`}>{cat.icon} {cat.label}</span>
+                    </div>
+                    <div className="flex items-center gap-4 mt-1.5 text-sm text-gray-500">
+                      <span className="flex items-center gap-1"><MapPin className="h-3.5 w-3.5" />{g.city}, {g.state}</span>
+                      <span className="flex items-center gap-1"><Phone className="h-3.5 w-3.5" />{g.phone}</span>
+                    </div>
+                  </div>
                 </Link>
-                <button
-                  onClick={() => handleDelete(g.id)}
-                  className="btn btn-ghost text-red-600 hover:bg-red-50"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <Link href={`/dashboard/edit/${g.id}`} className="btn btn-ghost">
+                    <Pencil className="h-4 w-4" />
+                  </Link>
+                  <button
+                    onClick={() => handleDelete(g.id)}
+                    className="btn btn-ghost text-red-600 hover:bg-red-50"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

@@ -1,28 +1,28 @@
 {
-  "initialUserPrompt": "i created a gemach just to test it out. there is no option to put in hours or other details about the gemach....special instructions etc.",
+  "initialUserPrompt": "QA fixes: favorite sync, double card, unused import, requests action, profile editing",
   "items": [
     {
-      "name": "Add hours editor (7-day grid with time inputs + closed toggle)",
+      "name": "Fix GemachCard favorite state sync with prop",
       "completed": true
     },
     {
-      "name": "Add needs input (comma-separated textarea)",
+      "name": "Fix double card border in my-gemachs",
       "completed": true
     },
     {
-      "name": "Add pickup notes textarea",
+      "name": "Remove unused ChevronRight import in MessagesPage",
       "completed": true
     },
     {
-      "name": "Add dropoff/delivery/apptOnly toggle checkboxes",
+      "name": "Add Requests quick action to dashboard",
       "completed": true
     },
     {
-      "name": "Wire new fields into handleSubmit body",
+      "name": "Make profile page editable",
       "completed": true
     },
     {
-      "name": "Verify build succeeds",
+      "name": "Build and deploy to Vercel",
       "completed": true
     }
   ]

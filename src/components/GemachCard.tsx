@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { MapPin, Clock, Phone, Bookmark } from "lucide-react";
 import { catOf, isOpenNow } from "@/lib/utils";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 
 interface GemachCardProps {
@@ -25,6 +25,10 @@ export function GemachCard({ gemach, isFavorited, onToggleFavorite }: GemachCard
   const cat = catOf(gemach.category);
   const open = isOpenNow(gemach.hours);
   const [fav, setFav] = useState(isFavorited || false);
+
+  useEffect(() => {
+    setFav(isFavorited || false);
+  }, [isFavorited]);
 
   async function toggleFav(e: React.MouseEvent) {
     e.preventDefault();

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Heart, Search, MessageSquare, Plus, Package, Bookmark } from "lucide-react";
+import { Heart, Search, MessageSquare, Plus, Package, Bookmark, Gift } from "lucide-react";
 import { CardSkeleton } from "@/components/Skeleton";
 import { GemachCard } from "@/components/GemachCard";
 
@@ -39,9 +39,9 @@ export default function DashboardPage() {
   }
 
   const stats = [
-    { icon: Heart, label: "My Gemachs", count: data.myGemachs.length, color: "bg-primary-50 text-primary-600" },
-    { icon: MessageSquare, label: "Messages", count: data.messages.filter((m: any) => !m.read).length, color: "bg-amber-50 text-amber-600" },
-    { icon: Search, label: "Total Gemachs", count: data.allGemachs.length, color: "bg-green-50 text-green-600" },
+    { icon: Heart, label: "My Gemachs", count: data.myGemachs.length, color: "bg-blue-100 text-blue-600", border: "border-l-blue-500" },
+    { icon: MessageSquare, label: "Messages", count: data.messages.filter((m: any) => !m.read).length, color: "bg-amber-100 text-amber-600", border: "border-l-amber-500" },
+    { icon: Search, label: "Total Gemachs", count: data.allGemachs.length, color: "bg-emerald-100 text-emerald-600", border: "border-l-emerald-500" },
   ];
 
   return (
@@ -54,7 +54,7 @@ export default function DashboardPage() {
       {/* Stats */}
       <div className="grid gap-4 md:grid-cols-3">
         {stats.map((s) => (
-          <div key={s.label} className="card p-5 flex items-center gap-4">
+          <div key={s.label} className={`card p-5 flex items-center gap-4 border-l-4 ${s.border}`}>
             <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${s.color}`}>
               <s.icon className="h-6 w-6" />
             </div>
@@ -73,6 +73,7 @@ export default function DashboardPage() {
           <Link href="/dashboard/new" className="btn btn-primary"><Plus className="h-4 w-4" /> Add Gemach</Link>
           <Link href="/gemachs" className="btn btn-secondary"><Search className="h-4 w-4" /> Browse</Link>
           <Link href="/dashboard/messages" className="btn btn-secondary"><MessageSquare className="h-4 w-4" /> Messages</Link>
+          <Link href="/dashboard/requests" className="btn btn-secondary"><Gift className="h-4 w-4" /> Requests</Link>
           <Link href="/dashboard/saved" className="btn btn-secondary"><Bookmark className="h-4 w-4" /> Saved</Link>
         </div>
       </div>

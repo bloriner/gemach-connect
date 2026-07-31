@@ -6,6 +6,10 @@ declare module "next-auth" {
       id: string;
       email: string;
       name: string;
+      phone?: string | null;
+      city?: string | null;
+      state?: string | null;
+      bio?: string | null;
     };
   }
 }

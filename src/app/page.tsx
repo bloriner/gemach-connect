@@ -25,19 +25,19 @@ export default function LandingPage() {
       </header>
 
       {/* Hero */}
-      <section className="px-4 py-20 text-center">
-        <h1 className="mx-auto max-w-3xl text-4xl font-extrabold tracking-tight text-gray-900 sm:text-5xl">
+      <section className="bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 px-4 py-24 text-center">
+        <h1 className="mx-auto max-w-3xl text-4xl font-extrabold tracking-tight text-white sm:text-5xl">
           Find Gemachs Across North America
         </h1>
-        <p className="mx-auto mt-4 max-w-2xl text-lg text-gray-600">
+        <p className="mx-auto mt-4 max-w-2xl text-lg text-blue-100">
           Discover free lending organizations in your community. From baby items to medical equipment,
           wedding gowns to furniture — the Jewish community shares what you need, when you need it.
         </p>
         <div className="mt-8 flex items-center justify-center gap-4">
-          <Link href="/gemachs" className="btn btn-primary px-6 py-3 text-lg">
+          <Link href="/gemachs" className="inline-flex items-center gap-2 rounded-lg bg-white px-6 py-3 text-lg font-semibold text-blue-700 transition hover:bg-blue-50">
             <Search className="h-5 w-5" /> Browse Gemachs
           </Link>
-          <Link href="/register" className="btn btn-secondary px-6 py-3 text-lg">
+          <Link href="/register" className="inline-flex items-center gap-2 rounded-lg border border-white/30 px-6 py-3 text-lg font-semibold text-white transition hover:bg-white/10">
             <Heart className="h-5 w-5" /> List Your Gemach
           </Link>
         </div>

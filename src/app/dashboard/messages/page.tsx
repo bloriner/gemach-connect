@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import { useSession } from "next-auth/react";
-import { MessageSquare, Send, Loader2, ChevronRight } from "lucide-react";
+import { MessageSquare, Send, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { EmptyState } from "@/components/EmptyState";
 import { CardSkeleton } from "@/components/Skeleton";
