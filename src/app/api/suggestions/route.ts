@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
 
 export async function POST(req: Request) {
   const session = await getServerSession(authOptions);
@@ -28,18 +28,12 @@ export async function POST(req: Request) {
     },
   });
 
-  // Send email notification
+  // Send email via Resend
   try {
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.EMAIL_FROM || "bloriner@gmail.com",
-        pass: process.env.GMAIL_APP_PASSWORD,
-      },
-    });
+    const resend = new Resend(process.env.RESEND_API_KEY);
 
-    await transporter.sendMail({
-      from: `"Gemach Connect" <${process.env.EMAIL_FROM || "bloriner@gmail.com"}>`,
+    await resend.emails.send({
+      from: "Gemach Connect <onboarding@resend.dev>",
       to: process.env.EMAIL_TO || "bloriner@gmail.com",
       subject: `[Gemach Connect] ${title.trim()}`,
       html: `
