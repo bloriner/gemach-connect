@@ -1,24 +1,28 @@
 {
-  "initialUserPrompt": "QA fixes: favorite sync, double card, unused import, requests action, profile editing",
+  "initialUserPrompt": "Build map view, needs feed, advanced filters, share button, and PWA",
   "items": [
     {
-      "name": "Fix GemachCard favorite state sync with prop",
+      "name": "Install Leaflet and build map page with near-me",
       "completed": true
     },
     {
-      "name": "Fix double card border in my-gemachs",
+      "name": "Create Needs Feed page and sidebar link",
       "completed": true
     },
     {
-      "name": "Remove unused ChevronRight import in MessagesPage",
+      "name": "Add advanced filters to browse page + API",
       "completed": true
     },
     {
-      "name": "Add Requests quick action to dashboard",
+      "name": "Add share button to gemach detail page",
       "completed": true
     },
     {
-      "name": "Make profile page editable",
+      "name": "PWA: manifest, service worker, meta tags",
+      "completed": true
+    },
+    {
+      "name": "Update sidebar with Map and Needs links",
       "completed": true
     },
     {

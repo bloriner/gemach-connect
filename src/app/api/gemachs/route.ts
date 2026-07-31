@@ -22,6 +22,8 @@ export async function GET(req: Request) {
   }
   if (category) where.category = category;
   if (state) where.state = state;
+  if (searchParams.get("dropoff") === "true") where.dropoff = true;
+  if (searchParams.get("delivery") === "true") where.delivery = true;
   if (mine === "true" && session?.user?.id) {
     where.ownerId = session.user.id;
   }

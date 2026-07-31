@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
-import { MapPin, Clock, Phone, Mail, User, ArrowLeft, Send, Loader2, Gift, Bookmark } from "lucide-react";
+import { MapPin, Clock, Phone, Mail, User, ArrowLeft, Send, Loader2, Gift, Bookmark, Share2, Check } from "lucide-react";
 import { toast } from "sonner";
 import { catOf, isOpenNow } from "@/lib/utils";
 import { PageSkeleton } from "@/components/Skeleton";
@@ -25,6 +25,7 @@ export default function GemachDetailPage() {
   const [offerMethod, setOfferMethod] = useState("dropoff");
   const [offerNote, setOfferNote] = useState("");
   const [isFavorited, setIsFavorited] = useState(false);
+  const [shared, setShared] = useState(false);
 
   useEffect(() => {
     fetch(`/api/gemachs/${id}`)
@@ -93,6 +94,25 @@ export default function GemachDetailPage() {
     }
   }
 
+  async function handleShare() {
+    const text = `${gemach.name} — ${gemach.category} gemach in ${gemach.city}, ${gemach.state}. ${gemach.phone}`;
+    const url = window.location.href;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: gemach.name, text, url });
+        return;
+      } catch {}
+    }
+
+    // Clipboard fallback
+    try {
+      await navigator.clipboard.writeText(`${text}\n${url}`);
+      setShared(true);
+      setTimeout(() => setShared(false), 2000);
+    } catch {}
+  }
+
   async function toggleFavorite() {
     const prev = isFavorited;
     setIsFavorited(!prev);
@@ -129,6 +149,10 @@ export default function GemachDetailPage() {
               </div>
             </div>
             <div className="flex gap-2">
+              <button onClick={handleShare} className="btn btn-ghost">
+                {shared ? <Check className="h-4 w-4 text-green-600" /> : <Share2 className="h-4 w-4" />}
+                {shared ? "Copied!" : "Share"}
+              </button>
               <button onClick={toggleFavorite} className={`btn btn-ghost ${isFavorited ? "text-amber-500" : ""}`}>
                 <Bookmark className={`h-4 w-4 ${isFavorited ? "fill-current" : ""}`} />
                 {isFavorited ? "Saved" : "Save"}

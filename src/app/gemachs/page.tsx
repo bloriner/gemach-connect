@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
-import { Search, Filter } from "lucide-react";
+import { useEffect, useState, useCallback, useMemo } from "react";
+import { Search, Filter, Clock, Truck, PackageCheck } from "lucide-react";
 import { GemachCard } from "@/components/GemachCard";
 import { EmptyState } from "@/components/EmptyState";
 import { PageSkeleton } from "@/components/Skeleton";
-import { CATEGORIES, STATES } from "@/lib/utils";
+import { CATEGORIES, STATES, isOpenNow } from "@/lib/utils";
 
 export default function DiscoverPage() {
   const [gemachs, setGemachs] = useState<any[]>([]);
@@ -14,12 +14,20 @@ export default function DiscoverPage() {
   const [category, setCategory] = useState("");
   const [state, setState] = useState("");
 
-  const fetchGemachs = useCallback(async (search: string, cat: string, st: string) => {
+  // Advanced filters
+  const [openNow, setOpenNow] = useState(false);
+  const [dropoff, setDropoff] = useState(false);
+  const [delivery, setDelivery] = useState(false);
+  const [hasNeeds, setHasNeeds] = useState(false);
+
+  const fetchGemachs = useCallback(async (search: string, cat: string, st: string, drop: boolean, del: boolean) => {
     setLoading(true);
     const params = new URLSearchParams();
     if (search) params.set("q", search);
     if (cat) params.set("category", cat);
     if (st) params.set("state", st);
+    if (drop) params.set("dropoff", "true");
+    if (del) params.set("delivery", "true");
     const res = await fetch(`/api/gemachs?${params.toString()}`);
     const data = await res.json();
     setGemachs(data.gemachs || []);
@@ -28,9 +36,26 @@ export default function DiscoverPage() {
 
   // Debounced search
   useEffect(() => {
-    const t = setTimeout(() => fetchGemachs(q, category, state), 300);
+    const t = setTimeout(() => fetchGemachs(q, category, state, dropoff, delivery), 300);
     return () => clearTimeout(t);
-  }, [q, category, state, fetchGemachs]);
+  }, [q, category, state, dropoff, delivery, fetchGemachs]);
+
+  // Client-side filters
+  const filtered = useMemo(() => {
+    let result = gemachs;
+    if (openNow) {
+      result = result.filter((g) => isOpenNow(g.hours));
+    }
+    if (hasNeeds) {
+      result = result.filter((g) => {
+        try {
+          const needs = JSON.parse(g.needs);
+          return Array.isArray(needs) && needs.length > 0;
+        } catch { return false; }
+      });
+    }
+    return result;
+  }, [gemachs, openNow, hasNeeds]);
 
   return (
     <div className="max-w-6xl mx-auto space-y-6">
@@ -64,23 +89,62 @@ export default function DiscoverPage() {
             ))}
           </select>
         </div>
+
+        {/* Advanced Toggles */}
+        <div className="flex flex-wrap gap-2 pt-2 border-t">
+          <button
+            onClick={() => setOpenNow(!openNow)}
+            className={`badge cursor-pointer transition flex items-center gap-1 ${
+              openNow ? "bg-green-100 text-green-700 border border-green-300" : "bg-gray-100 text-gray-600"
+            }`}
+          >
+            <Clock className="h-3 w-3" /> Open Now
+          </button>
+          <button
+            onClick={() => setDropoff(!dropoff)}
+            className={`badge cursor-pointer transition flex items-center gap-1 ${
+              dropoff ? "bg-blue-100 text-blue-700 border border-blue-300" : "bg-gray-100 text-gray-600"
+            }`}
+          >
+            <Truck className="h-3 w-3" /> Dropoffs
+          </button>
+          <button
+            onClick={() => setDelivery(!delivery)}
+            className={`badge cursor-pointer transition flex items-center gap-1 ${
+              delivery ? "bg-purple-100 text-purple-700 border border-purple-300" : "bg-gray-100 text-gray-600"
+            }`}
+          >
+            <Truck className="h-3 w-3" /> Delivery
+          </button>
+          <button
+            onClick={() => setHasNeeds(!hasNeeds)}
+            className={`badge cursor-pointer transition flex items-center gap-1 ${
+              hasNeeds ? "bg-amber-100 text-amber-700 border border-amber-300" : "bg-gray-100 text-gray-600"
+            }`}
+          >
+            <PackageCheck className="h-3 w-3" /> Has Needs
+          </button>
+        </div>
       </div>
 
       {/* Results */}
       {loading ? (
         <PageSkeleton />
-      ) : gemachs.length === 0 ? (
+      ) : filtered.length === 0 ? (
         <EmptyState
           icon={Search}
           title="No gemachs found"
           description="Try adjusting your search or filters to find what you're looking for."
         />
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {gemachs.map((g) => (
-            <GemachCard key={g.id} gemach={g} />
-          ))}
-        </div>
+        <>
+          <p className="text-sm text-gray-500">{filtered.length} gemach{filtered.length !== 1 ? "s" : ""} found</p>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {filtered.map((g) => (
+              <GemachCard key={g.id} gemach={g} />
+            ))}
+          </div>
+        </>
       )}
     </div>
   );
