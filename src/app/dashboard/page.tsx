@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Heart, Search, MessageSquare, Plus, Package, Bookmark, Gift } from "lucide-react";
+import { Heart, Search, MessageSquare, Plus, Package, Bookmark, Gift, Clock, RotateCcw } from "lucide-react";
 import { CardSkeleton } from "@/components/Skeleton";
 import { GemachCard } from "@/components/GemachCard";
 
@@ -12,15 +12,22 @@ export default function DashboardPage() {
 
   useEffect(() => {
     async function load() {
-      const [myRes, msgRes, allRes] = await Promise.all([
+      const [myRes, msgRes, allRes, itemsRes] = await Promise.all([
         fetch("/api/gemachs?mine=true"),
         fetch("/api/messages"),
         fetch("/api/gemachs"),
+        fetch("/api/items"),
       ]);
       const myData = await myRes.json();
       const msgData = await msgRes.json();
       const allData = await allRes.json();
-      setData({ myGemachs: myData.gemachs || [], messages: msgData.messages || [], allGemachs: allData.gemachs || [] });
+      const itemsData = await itemsRes.json();
+      setData({
+        myGemachs: myData.gemachs || [],
+        messages: msgData.messages || [],
+        allGemachs: allData.gemachs || [],
+        itemStats: itemsData.stats || { available: 0, lent: 0, returned: 0, total: 0 },
+      });
       setLoading(false);
     }
     load();
@@ -29,8 +36,8 @@ export default function DashboardPage() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <div className="grid gap-4 md:grid-cols-3">
-          {Array.from({ length: 3 }).map((_, i) => (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
             <div key={i} className="card p-5"><CardSkeleton /></div>
           ))}
         </div>
@@ -38,10 +45,13 @@ export default function DashboardPage() {
     );
   }
 
+  const itemStats = data.itemStats || { available: 0, lent: 0, returned: 0, total: 0 };
+
   const stats = [
     { icon: Heart, label: "My Gemachs", count: data.myGemachs.length, color: "bg-blue-100 text-blue-600", border: "border-l-blue-500" },
-    { icon: MessageSquare, label: "Messages", count: data.messages.filter((m: any) => !m.read).length, color: "bg-amber-100 text-amber-600", border: "border-l-amber-500" },
-    { icon: Search, label: "Total Gemachs", count: data.allGemachs.length, color: "bg-emerald-100 text-emerald-600", border: "border-l-emerald-500" },
+    { icon: Package, label: "Items Available", count: itemStats.available, color: "bg-green-100 text-green-600", border: "border-l-green-500" },
+    { icon: Clock, label: "Items Borrowed", count: itemStats.lent, color: "bg-amber-100 text-amber-600", border: "border-l-amber-500" },
+    { icon: MessageSquare, label: "Unread Messages", count: data.messages.filter((m: any) => !m.read).length, color: "bg-purple-100 text-purple-600", border: "border-l-purple-500" },
   ];
 
   return (
@@ -71,6 +81,7 @@ export default function DashboardPage() {
         <h2 className="text-lg font-semibold text-gray-900 mb-3">Quick Actions</h2>
         <div className="flex flex-wrap gap-3">
           <Link href="/dashboard/new" className="btn btn-primary"><Plus className="h-4 w-4" /> Add Gemach</Link>
+          <Link href="/dashboard/items" className="btn btn-secondary"><Package className="h-4 w-4" /> Items</Link>
           <Link href="/gemachs" className="btn btn-secondary"><Search className="h-4 w-4" /> Browse</Link>
           <Link href="/dashboard/messages" className="btn btn-secondary"><MessageSquare className="h-4 w-4" /> Messages</Link>
           <Link href="/dashboard/requests" className="btn btn-secondary"><Gift className="h-4 w-4" /> Requests</Link>

@@ -24,6 +24,7 @@ const navItems = [
   { href: "/gemachs", label: "Browse Gemachs", icon: Search },
   { href: "/map", label: "Map View", icon: Map },
   { href: "/needs", label: "Needs Feed", icon: Gift },
+  { href: "/dashboard/items", label: "Items", icon: Package },
   { href: "/dashboard/my-gemachs", label: "My Gemachs", icon: Heart },
   { href: "/dashboard/new", label: "Add Gemach", icon: Plus },
   { href: "/dashboard/requests", label: "Requests", icon: Package },
