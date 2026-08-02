@@ -77,29 +77,29 @@ export default function LandingPage() {
       </section>
 
       {/* Dockly CTA Banner */}
-      <section className="border-t bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 px-4 py-10">
+      <section className="border-t bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 px-4 py-10">
         <div className="mx-auto max-w-3xl text-center">
-          <p className="text-xs font-medium uppercase tracking-wider text-blue-400">
+          <p className="text-xs font-medium uppercase tracking-wider text-teal-400">
             Built by the creators of
           </p>
           <a
             href="https://trydockly.com"
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-2 inline-block text-3xl font-extrabold text-white hover:text-blue-300 transition"
+            className="mt-2 inline-block text-3xl font-extrabold text-white hover:text-orange-400 transition"
           >
-            Dockly
+            Dock<span className="text-orange-500">ly</span>
           </a>
-          <p className="mt-2 text-sm text-gray-400">
-            Simplifying logistics with smart QR code tracking. From dock to doorstep.
+          <p className="mt-2 text-sm text-slate-400">
+            Freight dock management, simplified. QR check-in, BOL, and signed POD — automatically.
           </p>
-          <div className="mt-4 inline-flex items-center gap-2 rounded-lg bg-blue-600/20 border border-blue-500/30 px-4 py-2">
-            <span className="text-xs text-blue-300">Gemach Connect users get 2 extra weeks free</span>
-            <code className="rounded bg-blue-500/20 px-2 py-0.5 text-sm font-mono font-bold text-blue-200">
+          <div className="mt-4 inline-flex items-center gap-2 rounded-lg bg-orange-500/10 border border-orange-500/30 px-4 py-2">
+            <span className="text-xs text-orange-300">Gemach Connect users get 2 extra weeks free</span>
+            <code className="rounded bg-orange-500/20 px-2 py-0.5 text-sm font-mono font-bold text-orange-200">
               GEMACH2W
             </code>
           </div>
-          <p className="mt-1 text-xs text-gray-500">Use promo code at checkout on trydockly.com</p>
+          <p className="mt-1 text-xs text-slate-500">Use promo code at checkout on trydockly.com</p>
         </div>
       </section>
 

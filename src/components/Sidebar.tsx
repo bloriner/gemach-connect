@@ -74,11 +74,11 @@ export function Sidebar() {
         href="https://trydockly.com"
         target="_blank"
         rel="noopener noreferrer"
-        className="mx-3 mb-2 block rounded-lg border border-blue-500/20 bg-blue-600/10 px-3 py-2 text-xs text-blue-300 hover:bg-blue-600/20 transition"
+        className="mx-3 mb-2 block rounded-lg border border-orange-500/20 bg-orange-500/10 px-3 py-2 text-xs text-orange-300 hover:bg-orange-500/20 transition"
       >
-        <span className="font-semibold">Dockly</span> — QR tracking for logistics.
+        <span className="font-semibold text-orange-200">Dockly</span> — QR tracking for logistics.
         <br />
-        <span className="text-blue-400/70">Code: <code className="font-mono font-bold text-blue-300">GEMACH2W</code></span>
+        <span className="text-orange-400/70">Code: <code className="font-mono font-bold text-orange-300">GEMACH2W</code></span>
       </a>
 
       {/* User */}

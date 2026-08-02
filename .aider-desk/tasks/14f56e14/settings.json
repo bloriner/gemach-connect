@@ -4,24 +4,24 @@
   "name": "Build Gemach Connect app",
   "archived": false,
   "aiderTotalCost": 0,
-  "agentTotalCost": 0.605475717,
+  "agentTotalCost": 0.6179863459999999,
   "mainModel": "",
   "currentMode": "agent",
   "weakModelLocked": false,
   "parentId": null,
   "lastAgentProviderMetadata": {
     "deepseek": {
-      "promptCacheHitTokens": 47488,
-      "promptCacheMissTokens": 91
+      "promptCacheHitTokens": 64896,
+      "promptCacheMissTokens": 143
     }
   },
   "agentProfileId": "default",
   "provider": "deepseek",
   "model": "deepseek-v4-pro",
   "workingMode": "local",
-  "updatedAt": "2026-08-02T16:56:02.212Z",
+  "updatedAt": "2026-08-02T17:06:39.751Z",
   "createdAt": "2026-07-31T17:18:10.413Z",
-  "startedAt": "2026-08-02T16:55:49.962Z",
+  "startedAt": "2026-08-02T17:05:14.111Z",
   "state": "IN_PROGRESS",
-  "completedAt": "2026-08-02T16:54:16.767Z"
+  "completedAt": "2026-08-02T17:00:21.471Z"
 }
