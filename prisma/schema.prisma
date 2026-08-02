@@ -61,6 +61,7 @@ model Gemach {
   offers    Offer[]
   threads   Thread[]
   favorites Favorite[]
+  items     Item[]
 }
 
 model Offer {
@@ -128,6 +129,24 @@ model Suggestion {
   createdAt DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Item {
+  id            String    @id @default(cuid())
+  name          String
+  description   String?
+  qrCode        String    @unique
+  status        String    @default("available")
+  borrowerName  String?
+  borrowerPhone String?
+  borrowerEmail String?
+  lentAt        DateTime?
+  returnedAt    DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  gemachId String
+  gemach   Gemach @relation(fields: [gemachId], references: [id], onDelete: Cascade)
 }
 
 model Favorite {

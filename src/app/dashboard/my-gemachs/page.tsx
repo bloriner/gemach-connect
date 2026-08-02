@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Heart, Pencil, Trash2, Loader2, MapPin, Clock, Phone } from "lucide-react";
+import { Heart, Pencil, Trash2, Loader2, MapPin, Clock, Phone, Package } from "lucide-react";
 import { toast } from "sonner";
 import { EmptyState } from "@/components/EmptyState";
 import { CardSkeleton } from "@/components/Skeleton";
@@ -70,6 +70,9 @@ export default function MyGemachsPage() {
                   </div>
                 </Link>
                 <div className="flex items-center gap-2 flex-shrink-0">
+                  <Link href={`/dashboard/my-gemachs/${g.id}/items`} className="btn btn-ghost" title="Track Items">
+                    <Package className="h-4 w-4" />
+                  </Link>
                   <Link href={`/dashboard/edit/${g.id}`} className="btn btn-ghost">
                     <Pencil className="h-4 w-4" />
                   </Link>

@@ -76,6 +76,33 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Dockly CTA Banner */}
+      <section className="border-t bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 px-4 py-10">
+        <div className="mx-auto max-w-3xl text-center">
+          <p className="text-xs font-medium uppercase tracking-wider text-blue-400">
+            Built by the creators of
+          </p>
+          <a
+            href="https://trydockly.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-2 inline-block text-3xl font-extrabold text-white hover:text-blue-300 transition"
+          >
+            Dockly
+          </a>
+          <p className="mt-2 text-sm text-gray-400">
+            Simplifying logistics with smart QR code tracking. From dock to doorstep.
+          </p>
+          <div className="mt-4 inline-flex items-center gap-2 rounded-lg bg-blue-600/20 border border-blue-500/30 px-4 py-2">
+            <span className="text-xs text-blue-300">Gemach Connect users get 2 extra weeks free</span>
+            <code className="rounded bg-blue-500/20 px-2 py-0.5 text-sm font-mono font-bold text-blue-200">
+              GEMACH2W
+            </code>
+          </div>
+          <p className="mt-1 text-xs text-gray-500">Use promo code at checkout on trydockly.com</p>
+        </div>
+      </section>
+
       {/* Footer */}
       <footer className="border-t bg-white px-4 py-8 text-center text-sm text-gray-500">
         <p>

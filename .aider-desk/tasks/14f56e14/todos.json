@@ -1,32 +1,32 @@
 {
-  "initialUserPrompt": "Build map view, needs feed, advanced filters, share button, and PWA",
+  "initialUserPrompt": "I want to make something similar to Dockly. every Gemach that has an account should be able to have a feature that when they lend something they can track it with a qr code. it should work the same way Dockly works and when the item is returned the person borrowing the item can scan something to return the item. i also want to write onthe bottom of the website somwhere that this was created by the creators of dockly and include a link and maybe a special promocode to get an extra 2 weeks free of dockly",
   "items": [
     {
-      "name": "Install Leaflet and build map page with near-me",
+      "name": "Add Item model to Prisma schema + push DB",
       "completed": true
     },
     {
-      "name": "Create Needs Feed page and sidebar link",
+      "name": "Create API routes (items CRUD, lend/return, QR generation)",
       "completed": true
     },
     {
-      "name": "Add advanced filters to browse page + API",
+      "name": "Build public scan page at /scan/[qrCode]",
       "completed": true
     },
     {
-      "name": "Add share button to gemach detail page",
+      "name": "Build item management page for gemach owners",
       "completed": true
     },
     {
-      "name": "PWA: manifest, service worker, meta tags",
+      "name": "Add Dockly branding footer + promo code",
       "completed": true
     },
     {
-      "name": "Update sidebar with Map and Needs links",
+      "name": "Update sidebar with Items link",
       "completed": true
     },
     {
-      "name": "Build and deploy to Vercel",
+      "name": "Build and verify",
       "completed": true
     }
   ]
