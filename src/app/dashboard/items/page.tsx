@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   Package,
-  ArrowUpRight,
   Check,
   Clock,
   RotateCcw,
@@ -14,9 +13,12 @@ import {
   ExternalLink,
   QrCode,
   Filter,
+  Copy,
 } from "lucide-react";
 import { EmptyState } from "@/components/EmptyState";
 import { CardSkeleton } from "@/components/Skeleton";
+import { toast } from "sonner";
+import { formatDistanceToNow } from "date-fns";
 
 type Item = {
   id: string;
@@ -51,7 +53,15 @@ export default function ItemsDashboard() {
       });
   }, []);
 
-  const filtered = filter === "all" ? items : items.filter((i) => i.status === filter);
+  async function handleCopyLink(qrCode: string) {
+    await navigator.clipboard.writeText(
+      `https://gemach-connect.vercel.app/scan/${qrCode}`
+    );
+    toast.success("Scan link copied!");
+  }
+
+  const filtered =
+    filter === "all" ? items : items.filter((i) => i.status === filter);
 
   const statCards = [
     {
@@ -85,33 +95,52 @@ export default function ItemsDashboard() {
       <div className="max-w-6xl mx-auto space-y-6">
         <div className="grid gap-4 md:grid-cols-3">
           {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} className="card p-5"><CardSkeleton /></div>
+            <div key={i} className="card p-5">
+              <CardSkeleton />
+            </div>
           ))}
         </div>
       </div>
     );
   }
 
+  // QR image URL helper
+  const qrThumb = (qrCode: string) =>
+    `https://api.qrserver.com/v1/create-qr-code/?size=60x60&bgcolor=ffffff&color=0f172a&data=${encodeURIComponent(
+      `https://gemach-connect.vercel.app/scan/${qrCode}`
+    )}`;
+
   return (
     <div className="max-w-6xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Items</h1>
-          <p className="text-gray-500 mt-1">Track all your gemach items and their status.</p>
+          <p className="text-gray-500 mt-1">
+            Track all your gemach items with QR codes.{" "}
+            {stats.total > 0 && (
+              <span className="text-gray-400">
+                {stats.total} total · {stats.lent} currently borrowed
+              </span>
+            )}
+          </p>
         </div>
       </div>
 
-      {/* Stats — Dockly-style */}
+      {/* Stats */}
       <div className="grid gap-4 md:grid-cols-3">
         {statCards.map((s) => (
           <button
             key={s.label}
             onClick={() => setFilter(filter === s.filter ? "all" : s.filter)}
             className={`card p-5 flex items-center gap-4 border-l-4 ${s.border} text-left hover:shadow-md transition ${
-              filter === s.filter ? "ring-2 ring-offset-1 ring-gray-200" : ""
+              filter === s.filter
+                ? "ring-2 ring-offset-1 ring-gray-200"
+                : ""
             }`}
           >
-            <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${s.color}`}>
+            <div
+              className={`flex h-12 w-12 items-center justify-center rounded-xl ${s.color}`}
+            >
               <s.icon className="h-6 w-6" />
             </div>
             <div>
@@ -122,7 +151,7 @@ export default function ItemsDashboard() {
         ))}
       </div>
 
-      {/* Filter bar */}
+      {/* Filter chips */}
       {stats.total > 0 && (
         <div className="flex items-center gap-2">
           <Filter className="h-4 w-4 text-gray-400" />
@@ -142,7 +171,7 @@ export default function ItemsDashboard() {
         </div>
       )}
 
-      {/* Items list */}
+      {/* Items grid */}
       {filtered.length === 0 ? (
         <EmptyState
           icon={Package}
@@ -159,30 +188,34 @@ export default function ItemsDashboard() {
           }
         />
       ) : (
-        <div className="space-y-2">
+        <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
           {filtered.map((item) => (
-            <div key={item.id} className="card p-4 flex items-center justify-between gap-4">
-              <div className="flex items-center gap-3 min-w-0">
-                <div
-                  className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg ${
-                    item.status === "available"
-                      ? "bg-green-100 text-green-600"
-                      : item.status === "lent"
-                      ? "bg-amber-100 text-amber-600"
-                      : "bg-blue-100 text-blue-600"
-                  }`}
-                >
-                  {item.status === "available" ? (
-                    <Package className="h-4 w-4" />
-                  ) : item.status === "lent" ? (
-                    <Clock className="h-4 w-4" />
-                  ) : (
-                    <Check className="h-4 w-4" />
+            <div
+              key={item.id}
+              className="card p-4 hover:shadow-md transition group"
+            >
+              <div className="flex items-start gap-3">
+                {/* QR thumbnail */}
+                <img
+                  src={qrThumb(item.qrCode)}
+                  alt="QR"
+                  className="w-10 h-10 rounded-lg border border-gray-200 flex-shrink-0"
+                />
+                <div className="min-w-0 flex-1">
+                  <Link
+                    href={`/dashboard/items/${item.id}`}
+                    className="font-semibold text-gray-900 truncate block group-hover:text-primary-600 transition"
+                  >
+                    {item.name}
+                  </Link>
+                  <p className="text-xs text-gray-400">{item.gemach.name}</p>
+                  {item.description && (
+                    <p className="text-xs text-gray-500 mt-0.5 line-clamp-1">
+                      {item.description}
+                    </p>
                   )}
-                </div>
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <p className="font-medium text-gray-900 truncate">{item.name}</p>
+                  {/* Status + time */}
+                  <div className="mt-2 flex items-center gap-2 flex-wrap">
                     <span
                       className={`text-xs font-medium px-1.5 py-0.5 rounded-full ${
                         item.status === "available"
@@ -198,36 +231,43 @@ export default function ItemsDashboard() {
                         ? "Borrowed"
                         : "Returned"}
                     </span>
-                  </div>
-                  <p className="text-xs text-gray-400 mt-0.5">
-                    {item.gemach.name}
-                    {item.status === "lent" && item.borrowerName && (
-                      <> · Borrowed by {item.borrowerName}</>
-                    )}
                     {item.status === "lent" && item.lentAt && (
-                      <> · {new Date(item.lentAt).toLocaleDateString()}</>
+                      <span className="text-xs text-amber-500">
+                        {formatDistanceToNow(new Date(item.lentAt), { addSuffix: true })}
+                      </span>
                     )}
-                    {item.status === "returned" && item.returnedAt && (
-                      <> · Returned {new Date(item.returnedAt).toLocaleDateString()}</>
-                    )}
-                  </p>
+                  </div>
+                  {/* Borrower info if lent */}
+                  {item.status === "lent" && item.borrowerName && (
+                    <div className="mt-2 flex items-center gap-1.5 text-xs text-amber-600 bg-amber-50 rounded-md px-2 py-1 w-fit">
+                      <User className="h-3 w-3" />
+                      {item.borrowerName}
+                    </div>
+                  )}
                 </div>
               </div>
-              <div className="flex items-center gap-1 flex-shrink-0">
+              {/* Action bar */}
+              <div className="mt-3 pt-3 border-t border-gray-100 flex items-center gap-2">
+                <Link
+                  href={`/dashboard/items/${item.id}`}
+                  className="btn btn-secondary flex-1 text-xs py-1.5 justify-center"
+                >
+                  Details
+                </Link>
+                <button
+                  onClick={() => handleCopyLink(item.qrCode)}
+                  className="btn btn-secondary text-xs py-1.5 px-2"
+                  title="Copy scan link"
+                >
+                  <Copy className="h-3.5 w-3.5" />
+                </button>
                 <Link
                   href={`/scan/${item.qrCode}`}
                   target="_blank"
-                  className="btn btn-ghost p-1.5"
+                  className="btn btn-secondary text-xs py-1.5 px-2"
                   title="Open scan page"
                 >
-                  <ExternalLink className="h-4 w-4" />
-                </Link>
-                <Link
-                  href={`/dashboard/my-gemachs/${item.gemach.id}/items`}
-                  className="btn btn-ghost p-1.5"
-                  title="Manage items for this gemach"
-                >
-                  <ArrowUpRight className="h-4 w-4" />
+                  <ExternalLink className="h-3.5 w-3.5" />
                 </Link>
               </div>
             </div>
@@ -235,60 +275,89 @@ export default function ItemsDashboard() {
         </div>
       )}
 
-      {/* Borrowed items detail */}
+      {/* Borrowed items detail section */}
       {filtered.some((i) => i.status === "lent") && (
         <div className="mt-8">
-          <h2 className="text-lg font-semibold text-gray-900 mb-3">Currently Borrowed</h2>
-          <div className="space-y-2">
+          <h2 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
+            <Clock className="h-5 w-5 text-amber-500" />
+            Currently Borrowed
+          </h2>
+          <div className="space-y-3">
             {filtered
               .filter((i) => i.status === "lent")
               .map((item) => (
-                <div key={item.id} className="card p-4 bg-amber-50/30 border-amber-200">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <p className="font-semibold text-gray-900">{item.name}</p>
-                      <p className="text-xs text-gray-500">{item.gemach.name}</p>
-                      <div className="mt-2 space-y-1">
-                        <div className="flex items-center gap-1.5 text-sm text-gray-700">
-                          <User className="h-3.5 w-3.5 text-gray-400" />
-                          {item.borrowerName}
+                <div
+                  key={item.id}
+                  className="card p-4 bg-amber-50/30 border border-amber-200"
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex gap-3">
+                      <img
+                        src={qrThumb(item.qrCode)}
+                        alt="QR"
+                        className="w-10 h-10 rounded-lg border border-amber-200 flex-shrink-0"
+                      />
+                      <div>
+                        <Link
+                          href={`/dashboard/items/${item.id}`}
+                          className="font-semibold text-gray-900 hover:text-primary-600"
+                        >
+                          {item.name}
+                        </Link>
+                        <p className="text-xs text-gray-500">{item.gemach.name}</p>
+                        <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1">
+                          <div className="flex items-center gap-1.5 text-sm text-gray-700">
+                            <User className="h-3.5 w-3.5 text-gray-400" />
+                            {item.borrowerName}
+                          </div>
+                          {item.borrowerPhone && (
+                            <div className="flex items-center gap-1.5 text-sm text-gray-700">
+                              <Phone className="h-3.5 w-3.5 text-gray-400" />
+                              <a
+                                href={`tel:${item.borrowerPhone}`}
+                                className="hover:text-primary-600"
+                              >
+                                {item.borrowerPhone}
+                              </a>
+                            </div>
+                          )}
+                          {item.borrowerEmail && (
+                            <div className="flex items-center gap-1.5 text-sm text-gray-700">
+                              <Mail className="h-3.5 w-3.5 text-gray-400" />
+                              <a
+                                href={`mailto:${item.borrowerEmail}`}
+                                className="hover:text-primary-600"
+                              >
+                                {item.borrowerEmail}
+                              </a>
+                            </div>
+                          )}
+                          {item.lentAt && (
+                            <div className="flex items-center gap-1.5 text-xs text-gray-500 col-span-2">
+                              Borrowed{" "}
+                              {new Date(item.lentAt).toLocaleDateString("en-US", {
+                                month: "long",
+                                day: "numeric",
+                              })}{" "}
+                              · {formatDistanceToNow(new Date(item.lentAt), { addSuffix: true })}
+                            </div>
+                          )}
                         </div>
-                        {item.borrowerPhone && (
-                          <div className="flex items-center gap-1.5 text-sm text-gray-700">
-                            <Phone className="h-3.5 w-3.5 text-gray-400" />
-                            {item.borrowerPhone}
-                          </div>
-                        )}
-                        {item.borrowerEmail && (
-                          <div className="flex items-center gap-1.5 text-sm text-gray-700">
-                            <Mail className="h-3.5 w-3.5 text-gray-400" />
-                            {item.borrowerEmail}
-                          </div>
-                        )}
-                        {item.lentAt && (
-                          <p className="text-xs text-gray-500">
-                            Borrowed {new Date(item.lentAt).toLocaleDateString()}
-                          </p>
-                        )}
                       </div>
                     </div>
-                    <div className="flex flex-col items-end gap-2">
-                      <a
-                        href={`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(
-                          `https://gemach-connect.vercel.app/scan/${item.qrCode}`
-                        )}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700"
+                    <div className="flex flex-col gap-2 flex-shrink-0">
+                      <button
+                        onClick={() => handleCopyLink(item.qrCode)}
+                        className="btn btn-secondary text-xs py-1.5"
                       >
-                        <QrCode className="h-3 w-3" /> QR
-                      </a>
+                        <Copy className="h-3 w-3" /> Copy Link
+                      </button>
                       <Link
                         href={`/scan/${item.qrCode}`}
                         target="_blank"
-                        className="btn btn-ghost text-xs"
+                        className="btn btn-secondary text-xs py-1.5"
                       >
-                        <ExternalLink className="h-3 w-3" /> Scan Page
+                        <ExternalLink className="h-3 w-3" /> Scan
                       </Link>
                     </div>
                   </div>

@@ -62,7 +62,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {stats.map((s) => (
           <div key={s.label} className={`card p-5 flex items-center gap-4 border-l-4 ${s.border}`}>
             <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${s.color}`}>
@@ -75,6 +75,28 @@ export default function DashboardPage() {
           </div>
         ))}
       </div>
+
+      {/* Borrowed Items Alert */}
+      {itemStats.lent > 0 && (
+        <div className="card p-4 bg-amber-50/50 border-amber-200">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-100 text-amber-600 flex-shrink-0">
+              <Clock className="h-5 w-5" />
+            </div>
+            <div className="flex-1">
+              <p className="font-semibold text-gray-900">
+                {itemStats.lent} item{itemStats.lent > 1 ? "s" : ""} currently borrowed
+              </p>
+              <p className="text-sm text-gray-500">
+                You&apos;ll be notified by email when items are returned.
+              </p>
+            </div>
+            <Link href="/dashboard/items" className="btn btn-primary text-sm flex-shrink-0">
+              <Package className="h-4 w-4" /> View Items
+            </Link>
+          </div>
+        </div>
+      )}
 
       {/* Quick Actions */}
       <div>
