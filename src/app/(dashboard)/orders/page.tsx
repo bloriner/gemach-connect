@@ -5,6 +5,8 @@ import { prisma } from "@/lib/prisma";
 import { ORDER_STATUS_COLORS, type OrderStatus } from "@/lib/utils";
 import { Plus } from "lucide-react";
 
+export const dynamic = "force-dynamic";
+
 export default async function OrdersPage() {
   const orders = await prisma.workOrder.findMany({
     orderBy: { createdAt: "desc" },

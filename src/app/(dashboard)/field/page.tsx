@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { prisma } from "@/lib/prisma";
 import { Clock } from "lucide-react";
 
+export const dynamic = "force-dynamic";
+
 export default async function FieldPage() {
   const activeOrders = await prisma.workOrder.findMany({
     where: {

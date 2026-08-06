@@ -3,6 +3,8 @@ import { Badge } from "@/components/ui/badge";
 import { prisma } from "@/lib/prisma";
 import { Users, MapPin } from "lucide-react";
 
+export const dynamic = "force-dynamic";
+
 export default async function CrewsPage() {
   const crews = await prisma.crew.findMany({
     include: {

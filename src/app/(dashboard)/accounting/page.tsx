@@ -3,6 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { formatCurrency } from "@/lib/utils";
 import { TrendingUp, TrendingDown, DollarSign, Receipt } from "lucide-react";
 
+export const dynamic = "force-dynamic";
+
 export default async function AccountingPage() {
   const now = new Date();
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);

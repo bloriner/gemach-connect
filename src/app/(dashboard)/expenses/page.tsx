@@ -29,6 +29,8 @@ const categoryBarColors: Record<string, string> = {
   OTHER: "bg-slate-500",
 };
 
+export const dynamic = "force-dynamic";
+
 export default async function ExpensesPage() {
   const now = new Date();
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);

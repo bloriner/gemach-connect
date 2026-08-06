@@ -51,6 +51,8 @@ const priorityBadge = (p: string) => {
   return map[p] ?? "default";
 };
 
+export const dynamic = "force-dynamic";
+
 export default async function CalendarPage() {
   const now = new Date();
   const year = now.getFullYear();

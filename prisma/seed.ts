@@ -55,15 +55,16 @@ async function main() {
     { name: "Michael Wilson", vehicle: "Van 13 — Ram ProMaster" },
   ];
 
-  const crews = [];
-  for (const tech of techNames) {
+  const crews: { id: string }[] = [];
+  for (let i = 0; i < techNames.length; i++) {
+    const tech = techNames[i];
     const user = await prisma.user.create({
       data: {
         email: `${tech.name.toLowerCase().replace(" ", ".")}@premierpro.com`,
         name: tech.name,
         password: techPassword,
         role: "CREW_LEAD",
-        phone: `555-${String(200 + crews.length).padStart(4, "0")}`,
+        phone: `555-${String(200 + i).padStart(4, "0")}`,
       },
     });
     const crew = await prisma.crew.create({

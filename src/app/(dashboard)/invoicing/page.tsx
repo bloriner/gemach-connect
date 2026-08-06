@@ -6,6 +6,8 @@ import { formatCurrency } from "@/lib/utils";
 import { Plus, FileText, TrendingUp, Clock, AlertTriangle } from "lucide-react";
 import Link from "next/link";
 
+export const dynamic = "force-dynamic";
+
 export default async function InvoicingPage() {
   const now = new Date();
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);

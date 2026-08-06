@@ -11,6 +11,8 @@ import {
   Clock,
 } from "lucide-react";
 
+export const dynamic = "force-dynamic";
+
 export default async function DashboardPage() {
   const [orderCount, crewCount, completedToday, revenueMonth, recentOrders, activeOrders] =
     await Promise.all([
