@@ -1,116 +1,142 @@
-import Link from "next/link";
-import { Heart, Search, MessageSquare, MapPin, ArrowRight } from "lucide-react";
+"use client";
 
-export default function LandingPage() {
+import { useState } from "react";
+import { signIn } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { Logo } from "@/components/ui/logo";
+
+export default function LoginPage() {
+  const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+
+    const result = await signIn("credentials", {
+      email,
+      password,
+      redirect: false,
+    });
+
+    setLoading(false);
+
+    if (result?.error) {
+      setError("Invalid email or password");
+      return;
+    }
+
+    router.push("/");
+    router.refresh();
+  };
+
   return (
-    <div className="min-h-screen">
-      {/* Header */}
-      <header className="border-b bg-white">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary-600">
-              <Heart className="h-5 w-5 text-white" />
-            </div>
-            <span className="text-xl font-bold text-gray-900">Gemach Connect</span>
-          </Link>
-          <div className="flex items-center gap-3">
-            <Link href="/login" className="btn btn-secondary">
-              Log In
-            </Link>
-            <Link href="/register" className="btn btn-primary">
-              Sign Up
-            </Link>
-          </div>
+    <div className="flex min-h-screen">
+      {/* Left: Brand Panel */}
+      <div className="hidden w-1/2 bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 lg:flex flex-col justify-between p-12 relative overflow-hidden">
+        {/* Background pattern */}
+        <div className="absolute inset-0 opacity-[0.03]">
+          <svg width="100%" height="100%">
+            <defs>
+              <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+                <path d="M 40 0 L 0 0 0 40" fill="none" stroke="white" strokeWidth="0.5" />
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#grid)" />
+          </svg>
         </div>
-      </header>
 
-      {/* Hero */}
-      <section className="bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 px-4 py-24 text-center">
-        <h1 className="mx-auto max-w-3xl text-4xl font-extrabold tracking-tight text-white sm:text-5xl">
-          Find Gemachs Across North America
-        </h1>
-        <p className="mx-auto mt-4 max-w-2xl text-lg text-blue-100">
-          Discover free lending organizations in your community. From baby items to medical equipment,
-          wedding gowns to furniture — the Jewish community shares what you need, when you need it.
-        </p>
-        <div className="mt-8 flex items-center justify-center gap-4">
-          <Link href="/gemachs" className="inline-flex items-center gap-2 rounded-lg bg-white px-6 py-3 text-lg font-semibold text-blue-700 transition hover:bg-blue-50">
-            <Search className="h-5 w-5" /> Browse Gemachs
-          </Link>
-          <Link href="/register" className="inline-flex items-center gap-2 rounded-lg border border-white/30 px-6 py-3 text-lg font-semibold text-white transition hover:bg-white/10">
-            <Heart className="h-5 w-5" /> List Your Gemach
-          </Link>
-        </div>
-      </section>
-
-      {/* Features */}
-      <section className="bg-white px-4 py-16">
-        <div className="mx-auto grid max-w-5xl gap-8 md:grid-cols-3">
-          <div className="card p-6 text-center">
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-primary-50">
-              <Search className="h-6 w-6 text-primary-600" />
-            </div>
-            <h3 className="mt-4 text-lg font-semibold">Search & Discover</h3>
-            <p className="mt-2 text-sm text-gray-500">
-              Browse gemachs by category, city, or keyword. Find exactly what you need in your neighborhood.
-            </p>
-          </div>
-          <div className="card p-6 text-center">
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-primary-50">
-              <MessageSquare className="h-6 w-6 text-primary-600" />
-            </div>
-            <h3 className="mt-4 text-lg font-semibold">Message & Arrange</h3>
-            <p className="mt-2 text-sm text-gray-500">
-              Connect directly with gemach owners. Arrange pickups, ask questions, and coordinate donations.
-            </p>
-          </div>
-          <div className="card p-6 text-center">
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-primary-50">
-              <MapPin className="h-6 w-6 text-primary-600" />
-            </div>
-            <h3 className="mt-4 text-lg font-semibold">Community Powered</h3>
-            <p className="mt-2 text-sm text-gray-500">
-              Every gemach is run by community members. List your own and help families in need.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* Dockly CTA Banner */}
-      <section className="border-t bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 px-4 py-10">
-        <div className="mx-auto max-w-3xl text-center">
-          <p className="text-xs font-medium uppercase tracking-wider text-teal-400">
-            Built by the creators of
+        <div className="relative">
+          <Logo className="scale-110 origin-left" />
+          <p className="mt-6 max-w-md text-lg text-slate-400 leading-relaxed">
+            Commercial real estate field service management. 
+            Carpet, janitorial, and property services — streamlined.
           </p>
-          <a
-            href="https://trydockly.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="mt-2 inline-block text-3xl font-extrabold text-white hover:text-orange-400 transition"
-          >
-            Dock<span className="text-orange-500">ly</span>
-          </a>
-          <p className="mt-2 text-sm text-slate-400">
-            Freight dock management, simplified. QR check-in, BOL, and signed POD — automatically.
-          </p>
-          <div className="mt-4 inline-flex items-center gap-2 rounded-lg bg-orange-500/10 border border-orange-500/30 px-4 py-2">
-            <span className="text-xs text-orange-300">Gemach Connect users get 2 extra weeks free</span>
-            <code className="rounded bg-orange-500/20 px-2 py-0.5 text-sm font-mono font-bold text-orange-200">
-              GEMACH2W
-            </code>
-          </div>
-          <p className="mt-1 text-xs text-slate-500">Use promo code at checkout on trydockly.com</p>
         </div>
-      </section>
 
-      {/* Footer */}
-      <footer className="border-t bg-white px-4 py-8 text-center text-sm text-gray-500">
-        <p>
-          Demo: <span className="font-medium text-gray-700">demo@gemach.app</span> /{" "}
-          <span className="font-medium text-gray-700">demo1234</span>
-        </p>
-        <p className="mt-1">Gemach Connect — Chesed made simple.</p>
-      </footer>
+        <div className="relative space-y-4">
+          <div className="flex items-center gap-4 text-sm">
+            <div className="flex -space-x-2">
+              {["bg-emerald-500", "bg-blue-500", "bg-amber-500", "bg-purple-500"].map((c, i) => (
+                <div key={i} className={`h-8 w-8 rounded-full ${c} border-2 border-slate-900 flex items-center justify-center text-[10px] font-bold text-white`}>
+                  {["JM", "KL", "TR", "BN"][i]}
+                </div>
+              ))}
+            </div>
+            <span className="text-slate-500">Trusted by teams across Michigan</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Right: Login Form */}
+      <div className="flex flex-1 items-center justify-center bg-white px-6">
+        <div className="w-full max-w-sm">
+          {/* Mobile logo */}
+          <div className="mb-10 lg:hidden">
+            <Logo />
+          </div>
+
+          <h1 className="text-2xl font-bold text-slate-900">Welcome back</h1>
+          <p className="mt-2 text-sm text-slate-500">
+            Sign in to Premier Pro Services
+          </p>
+
+          <form onSubmit={handleSubmit} className="mt-8 space-y-5">
+            {error && (
+              <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
+                {error}
+              </div>
+            )}
+
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-slate-700">
+                Email
+              </label>
+              <input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                className="mt-1 block w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
+                placeholder="you@company.com"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="password" className="block text-sm font-medium text-slate-700">
+                Password
+              </label>
+              <input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                className="mt-1 block w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
+                placeholder="••••••••"
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500/50 disabled:opacity-50 transition"
+            >
+              {loading ? "Signing in..." : "Sign In"}
+            </button>
+          </form>
+
+          <div className="mt-6 rounded-lg bg-slate-50 border border-slate-200 px-4 py-3">
+            <p className="text-xs font-medium text-slate-500 mb-1">Demo Credentials</p>
+            <p className="text-xs text-slate-600 font-mono">admin@premierpro.com / admin123</p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

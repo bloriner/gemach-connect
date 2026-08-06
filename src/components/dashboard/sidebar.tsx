@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { signOut, useSession } from "next-auth/react";
 import { cn } from "@/lib/utils";
+import { Logo } from "@/components/ui/logo";
 import {
   LayoutDashboard,
   ClipboardList,
@@ -15,37 +17,59 @@ import {
   Calendar,
   TrendingUp,
   DollarSign,
+  LogOut,
+  QrCode,
+  UserCheck,
 } from "lucide-react";
 
 const navigation = [
-  { section: "Operations", items: [
-    { name: "Dashboard", href: "/", icon: LayoutDashboard },
-    { name: "Orders", href: "/orders", icon: ClipboardList },
-    { name: "Calendar", href: "/calendar", icon: Calendar },
-    { name: "Crews", href: "/crews", icon: Users },
-    { name: "Field Tracking", href: "/field", icon: MapPin },
-  ]},
-  { section: "Finance", items: [
-    { name: "Accounting", href: "/accounting", icon: Calculator },
-    { name: "Invoicing", href: "/invoicing", icon: FileText },
-    { name: "Expenses", href: "/expenses", icon: DollarSign },
-    { name: "Reports", href: "/reports", icon: TrendingUp },
-  ]},
-  { section: "System", items: [
-    { name: "Settings", href: "/settings", icon: Settings },
-  ]},
+  {
+    section: "Operations",
+    items: [
+      { name: "Dashboard", href: "/", icon: LayoutDashboard },
+      { name: "Orders", href: "/orders", icon: ClipboardList },
+      { name: "Calendar", href: "/calendar", icon: Calendar },
+      { name: "Technicians", href: "/crews", icon: Users },
+      { name: "Field Tracking", href: "/field", icon: MapPin },
+    ],
+  },
+  {
+    section: "Finance",
+    items: [
+      { name: "Accounting", href: "/accounting", icon: Calculator },
+      { name: "Invoicing", href: "/invoicing", icon: FileText },
+      { name: "Expenses", href: "/expenses", icon: DollarSign },
+      { name: "Reports", href: "/reports", icon: TrendingUp },
+    ],
+  },
+  {
+    section: "Tools",
+    items: [
+      { name: "Equipment QR", href: "/equipment", icon: QrCode },
+      { name: "HR", href: "/hr", icon: UserCheck },
+    ],
+  },
+  {
+    section: "System",
+    items: [
+      { name: "Settings", href: "/settings", icon: Settings },
+    ],
+  },
 ];
 
 export function Sidebar() {
   const pathname = usePathname();
+  const { data: session } = useSession();
 
   return (
-    <aside className="fixed left-0 top-0 z-40 h-screen w-64 border-r border-slate-200 bg-white overflow-y-auto">
-      <div className="flex h-16 items-center gap-2 border-b border-slate-200 px-6">
-        <Truck className="h-7 w-7 text-brand-600" />
-        <span className="text-lg font-bold text-slate-900">FieldService Pro</span>
+    <aside className="fixed left-0 top-0 z-40 flex h-screen w-64 flex-col border-r border-slate-200 bg-white overflow-y-auto">
+      {/* Logo */}
+      <div className="flex h-16 items-center border-b border-slate-200 px-4">
+        <Logo />
       </div>
-      <nav className="mt-4 space-y-6 px-3 pb-8">
+
+      {/* Navigation */}
+      <nav className="flex-1 mt-4 space-y-6 px-3 pb-8">
         {navigation.map((section) => (
           <div key={section.section}>
             <p className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-slate-400">
@@ -74,6 +98,22 @@ export function Sidebar() {
           </div>
         ))}
       </nav>
+
+      {/* User */}
+      {session?.user && (
+        <div className="border-t border-slate-200 px-4 py-4 space-y-3">
+          <div className="text-sm">
+            <p className="font-medium text-slate-900 truncate">{session.user.name}</p>
+            <p className="text-slate-500 truncate text-xs">{session.user.email}</p>
+          </div>
+          <button
+            onClick={() => signOut({ callbackUrl: "/" })}
+            className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-500 transition hover:bg-slate-100 hover:text-slate-700"
+          >
+            <LogOut className="h-4 w-4" /> Sign Out
+          </button>
+        </div>
+      )}
     </aside>
   );
 }

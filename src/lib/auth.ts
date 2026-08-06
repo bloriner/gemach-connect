@@ -18,38 +18,41 @@ export const authOptions: NextAuthOptions = {
           where: { email: credentials.email },
         });
 
-        if (!user) return null;
+        if (!user || !user.password) return null;
 
-        const valid = await bcrypt.compare(credentials.password, user.password);
-        if (!valid) return null;
+        const isValid = await bcrypt.compare(credentials.password, user.password);
+        if (!isValid) return null;
 
-        return { id: user.id, email: user.email, name: user.name, phone: user.phone, city: user.city, state: user.state, bio: user.bio };
+        return {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          role: user.role,
+        };
       },
     }),
   ],
-  session: { strategy: "jwt" },
-  pages: { signIn: "/login" },
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
+        token.role = (user as any).role;
         token.id = user.id;
-        token.phone = (user as any).phone;
-        token.city = (user as any).city;
-        token.state = (user as any).state;
-        token.bio = (user as any).bio;
       }
       return token;
     },
     async session({ session, token }) {
       if (session.user) {
-        session.user.id = token.id;
-        session.user.phone = token.phone as string | null;
-        session.user.city = token.city as string | null;
-        session.user.state = token.state as string | null;
-        session.user.bio = token.bio as string | null;
+        (session.user as any).role = token.role;
+        (session.user as any).id = token.id;
       }
       return session;
     },
   },
-  secret: process.env.NEXTAUTH_SECRET || "dev-secret-change-me-in-production-min-32-chars",
+  pages: {
+    signIn: "/",
+  },
+  session: {
+    strategy: "jwt",
+  },
+  secret: process.env.NEXTAUTH_SECRET || "premier-pro-services-secret-change-me",
 };
