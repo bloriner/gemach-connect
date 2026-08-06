@@ -9,7 +9,6 @@ import {
   LayoutDashboard,
   ClipboardList,
   Users,
-  Truck,
   FileText,
   Settings,
   MapPin,
@@ -20,6 +19,7 @@ import {
   LogOut,
   QrCode,
   UserCheck,
+  X,
 } from "lucide-react";
 
 const navigation = [
@@ -57,19 +57,32 @@ const navigation = [
   },
 ];
 
-export function Sidebar() {
+interface SidebarProps {
+  mobileOpen: boolean;
+  onClose: () => void;
+}
+
+export function Sidebar({ mobileOpen, onClose }: SidebarProps) {
   const pathname = usePathname();
   const { data: session } = useSession();
 
-  return (
-    <aside className="fixed left-0 top-0 z-40 flex h-screen w-64 flex-col border-r border-slate-200 bg-white overflow-y-auto">
+  const sidebarContent = (
+    <div className="flex h-full flex-col">
       {/* Logo */}
-      <div className="flex h-16 items-center border-b border-slate-200 px-4">
+      <div className="flex h-16 items-center justify-between border-b border-slate-200 px-4">
         <Logo />
+        {/* Close button (mobile only) */}
+        <button
+          onClick={onClose}
+          className="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100 lg:hidden"
+          aria-label="Close sidebar"
+        >
+          <X className="h-5 w-5" />
+        </button>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 mt-4 space-y-6 px-3 pb-8">
+      <nav className="flex-1 mt-4 space-y-6 px-3 pb-8 overflow-y-auto">
         {navigation.map((section) => (
           <div key={section.section}>
             <p className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-slate-400">
@@ -82,6 +95,7 @@ export function Sidebar() {
                   <Link
                     key={item.name}
                     href={item.href}
+                    onClick={onClose}
                     className={cn(
                       "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
                       isActive
@@ -114,6 +128,30 @@ export function Sidebar() {
           </button>
         </div>
       )}
-    </aside>
+    </div>
+  );
+
+  return (
+    <>
+      {/* Desktop sidebar */}
+      <aside className="hidden lg:fixed lg:inset-y-0 lg:z-40 lg:flex lg:w-64 lg:flex-col lg:border-r lg:border-slate-200 lg:bg-white">
+        {sidebarContent}
+      </aside>
+
+      {/* Mobile overlay */}
+      {mobileOpen && (
+        <div className="fixed inset-0 z-50 lg:hidden">
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm transition-opacity"
+            onClick={onClose}
+          />
+          {/* Slide-in panel */}
+          <aside className="fixed inset-y-0 left-0 z-50 flex w-72 flex-col bg-white shadow-xl animate-slide-in">
+            {sidebarContent}
+          </aside>
+        </div>
+      )}
+    </>
   );
 }

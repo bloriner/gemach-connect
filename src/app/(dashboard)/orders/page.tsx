@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ResponsiveTable } from "@/components/ui/responsive-table";
 import { prisma } from "@/lib/prisma";
 import { ORDER_STATUS_COLORS, type OrderStatus } from "@/lib/utils";
 import { Plus } from "lucide-react";
@@ -18,77 +19,86 @@ export default async function OrdersPage() {
     },
   });
 
+  const statusVariant = (status: string) => {
+    const map: Record<string, "warning" | "info" | "success" | "danger"> = {
+      PENDING: "warning",
+      DISPATCHED: "info",
+      EN_ROUTE: "info",
+      ON_SITE: "info",
+      COMPLETED: "success",
+      CANCELLED: "danger",
+    };
+    return map[status] ?? "default";
+  };
+
+  const columns = [
+    {
+      header: "Order #",
+      accessor: (o: typeof orders[0]) => (
+        <span className="font-mono text-xs font-medium">{o.orderNumber}</span>
+      ),
+    },
+    {
+      header: "Customer",
+      accessor: (o: typeof orders[0]) => o.customer.companyName,
+    },
+    {
+      header: "Property",
+      accessor: (o: typeof orders[0]) => (
+        <span className="text-slate-600">{o.property.address}</span>
+      ),
+      hideOnMobile: true,
+    },
+    {
+      header: "Service",
+      accessor: (o: typeof orders[0]) => o.serviceType.name,
+    },
+    {
+      header: "Tech",
+      accessor: (o: typeof orders[0]) => (
+        <span className="text-slate-600">{o.crew?.name ?? "—"}</span>
+      ),
+      hideOnMobile: true,
+    },
+    {
+      header: "Status",
+      accessor: (o: typeof orders[0]) => (
+        <Badge variant={statusVariant(o.status)}>{o.status.replace("_", " ")}</Badge>
+      ),
+    },
+  ];
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Work Orders</h1>
+          <h1 className="text-xl font-bold text-slate-900 sm:text-2xl">Orders</h1>
           <p className="mt-1 text-sm text-slate-500">
-            {orders.length} orders total
+            {orders.length} work order{orders.length !== 1 ? "s" : ""}
           </p>
         </div>
-        <Button>
-          <Plus className="mr-2 h-4 w-4" />
+        <Button className="w-full sm:w-auto" size="sm">
+          <Plus className="mr-1.5 h-4 w-4" />
           New Order
         </Button>
       </div>
 
       <Card>
         <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-slate-200 bg-slate-50">
-                  <th className="px-6 py-3 text-left font-medium text-slate-600">Order #</th>
-                  <th className="px-6 py-3 text-left font-medium text-slate-600">Customer</th>
-                  <th className="px-6 py-3 text-left font-medium text-slate-600">Property</th>
-                  <th className="px-6 py-3 text-left font-medium text-slate-600">Service</th>
-                  <th className="px-6 py-3 text-left font-medium text-slate-600">Crew</th>
-                  <th className="px-6 py-3 text-left font-medium text-slate-600">Status</th>
-                  <th className="px-6 py-3 text-left font-medium text-slate-600">Price</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {orders.map((order) => (
-                  <tr key={order.id} className="hover:bg-slate-50">
-                    <td className="px-6 py-4 font-medium text-brand-700">
-                      {order.orderNumber}
-                    </td>
-                    <td className="px-6 py-4 text-slate-900">
-                      {order.customer.companyName}
-                    </td>
-                    <td className="px-6 py-4 text-slate-500">
-                      {order.property.address}
-                    </td>
-                    <td className="px-6 py-4 text-slate-500">
-                      {order.serviceType.name}
-                    </td>
-                    <td className="px-6 py-4 text-slate-500">
-                      {order.crew?.name ?? "—"}
-                    </td>
-                    <td className="px-6 py-4">
-                      <Badge
-                        variant={
-                          order.status === "COMPLETED"
-                            ? "success"
-                            : order.status === "CANCELLED"
-                            ? "danger"
-                            : order.status === "PENDING"
-                            ? "warning"
-                            : "info"
-                        }
-                      >
-                        {order.status.replace("_", " ")}
-                      </Badge>
-                    </td>
-                    <td className="px-6 py-4 text-slate-900">
-                      ${order.price?.toFixed(2) ?? "—"}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <ResponsiveTable
+            data={orders}
+            columns={columns}
+            keyField={(o) => o.id}
+            emptyMessage="No work orders yet. Create your first order to get started."
+            mobileLabel={(o) => (
+              <span className="flex items-center gap-2">
+                <span className="font-mono text-xs text-slate-500">{o.orderNumber}</span>
+                <Badge variant={statusVariant(o.status)} className="text-[10px]">
+                  {o.status.replace("_", " ")}
+                </Badge>
+              </span>
+            )}
+          />
         </CardContent>
       </Card>
     </div>

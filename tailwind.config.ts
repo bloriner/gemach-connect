@@ -21,6 +21,15 @@ const config: Config = {
           950: "#172554",
         },
       },
+      animation: {
+        "slide-in": "slideIn 0.2s ease-out",
+      },
+      keyframes: {
+        slideIn: {
+          "0%": { transform: "translateX(-100%)" },
+          "100%": { transform: "translateX(0)" },
+        },
+      },
     },
   },
   plugins: [],
