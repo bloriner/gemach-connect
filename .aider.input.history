@@ -2348,3 +2348,86 @@
 
 # 2026-08-07T19:23:17.190Z
 +Proceed.
+
+# 2026-08-07T19:29:51.742Z
++pick
+
+# 2026-08-07T19:32:43.588Z
++yes but before doing that......i got these 2 emails of failed productions:  Build Logs
++33s
++56 lines
++
++2
++Find in logs
++CtrlF
++Running build in Washington, D.C., USA (East) – iad1
++Build machine configuration: 2 cores, 8 GB
++Cloning github.com/bloriner/gemach-connect (Branch: master, Commit: 7368eed)
++Cloning completed: 876.000ms
++Restored build cache from previous deployment (4e4YsNRM7ALw1b7Vgc6WC17jY72T)
++Running "vercel build"
++Vercel CLI 58.1.0
++Installing dependencies...
++> premier-pro-services@0.1.0 postinstall
++> prisma generate
++Prisma schema loaded from prisma/schema.prisma
++✔ Generated Prisma Client (v5.22.0) to ./node_modules/@prisma/client in 403ms     and this:  Deployments
++55WMLZFek
++
++Deployment
++Logs
++Resources
++Source
++Open Graph
++Deployment Details
++Build Failed
++Command "npm run build" exited with 1
++Created
++github/bloriner
++bloriner
++7m ago
++Status
++Error
++Latest
++Duration
++38s
++7m ago
++Environment
++Production
++Domains
++premier-pro-services-git-master-bloriners-projects.vercel.app
++premier-pro-services-3nymxemkk-bloriners-projects.vercel.app
++Source
++master
++cee48a4
++feat: dispatch board with 4-column kanban, quick actions, crew assignment, auto-refresh
++
++Deployment Settings
++2 Recommendations
++Build Logs
++38s
++56 lines
++
++2
++Find in logs
++CtrlF
++Running build in Washington, D.C., USA (East) – iad1
++Build machine configuration: 2 cores, 8 GB
++Cloning github.com/bloriner/gemach-connect (Branch: master, Commit: cee48a4)
++Cloning completed: 805.000ms
++Restored build cache from previous deployment (4e4YsNRM7ALw1b7Vgc6WC17jY72T)
++Running "vercel build"
++Vercel CLI 58.1.0
++Installing dependencies...
++> premier-pro-services@0.1.0 postinstall
++> prisma generate
++Prisma schema loaded from prisma/schema.prisma
++✔ Generated Prisma Client (v5.22.0) to ./node_modules/@prisma/client in 431ms
++Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
++Tip: Want to react to database changes in your app as they happen? Discover how with Pulse: https://pris.ly/tip-1-pulse
++added 1 package in 4s
++
++
+
+# 2026-08-07T19:34:55.011Z
++yes. and maybe a little later when i'm ready i can give you existing customers to add? even before the staff starts using it?

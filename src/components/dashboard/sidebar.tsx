@@ -22,6 +22,7 @@ import {
   X,
   RefreshCw,
   Columns,
+  Building2,
 } from "lucide-react";
 
 const navigation = [
@@ -35,6 +36,7 @@ const navigation = [
       { name: "Price Book", href: "/price-book", icon: DollarSign },
       { name: "Calendar", href: "/calendar", icon: Calendar },
       { name: "Dispatch", href: "/dispatch", icon: Columns },
+      { name: "Customers", href: "/customers", icon: Building2 },
       { name: "Technicians", href: "/crews", icon: Users },
       { name: "Field Tracking", href: "/field", icon: MapPin },
       { name: "Live Tracking", href: "/tracking", icon: MapPin },
