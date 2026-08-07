@@ -2,10 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import Stripe from "stripe";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
-  apiVersion: "2025-06-01.basil" as any,
-});
-
 export async function POST(
   request: NextRequest,
   { params }: { params: { id: string } }
@@ -50,6 +46,10 @@ export async function POST(
   const amountInCents = Math.round(balance * 100);
 
   const baseUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
+
+  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
+    apiVersion: "2025-06-01.basil" as any,
+  });
 
   const session = await stripe.checkout.sessions.create({
     payment_method_types: ["card"],

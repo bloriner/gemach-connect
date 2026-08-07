@@ -2434,3 +2434,49 @@
 
 # 2026-08-07T19:40:23.662Z
 +i got another email of a failed deployment......
+
+# 2026-08-07T19:42:23.965Z
++yea
+
+# 2026-08-07T19:43:16.089Z
++before u do that......it still did not turn green
+
+# 2026-08-07T19:45:01.242Z
++the last 5 productions all have an error. you want each error or just that laast one?
+
+# 2026-08-07T19:46:54.886Z
++Error: Neither apiKey nor config.authenticator provided
++
++    at iw._setAuthenticator (/vercel/path0/.next/server/chunks/7745.js:2:197205)
++
++    at new iw (/vercel/path0/.next/server/chunks/7745.js:2:194540)
++
++    at 5710 (/vercel/path0/.next/server/app/api/portal/invoices/[id]/pay/route.js:1:769)
++
++    at t (/vercel/path0/.next/server/webpack-runtime.js:1:143)
++
++    at r (/vercel/path0/.next/server/app/api/portal/invoices/[id]/pay/route.js:1:2859)
++
++    at /vercel/path0/.next/server/app/api/portal/invoices/[id]/pay/route.js:1:2897
++
++    at t.X (/vercel/path0/.next/server/webpack-runtime.js:1:1285)
++
++    at /vercel/path0/.next/server/app/api/portal/invoices/[id]/pay/route.js:1:2872
++
++    at Object.<anonymous> (/vercel/path0/.next/server/app/api/portal/invoices/[id]/pay/route.js:1:2924)
++
++    at Module._compile (node:internal/modules/cjs/loader:1830:14)
++
++> Build error occurred
++
++Error: Failed to collect page data for /api/portal/invoices/[id]/pay
++
++    at /vercel/path0/node_modules/next/dist/build/utils.js:1269:15
++
++    at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {
++
++  type: 'Error'
++
++}
++
++Error: Command "npm run build" exited with 1
