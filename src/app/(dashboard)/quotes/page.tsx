@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { ResponsiveTable } from "@/components/ui/responsive-table";
 import QuoteLineItems, { QuoteLineItem } from "@/components/quotes/quote-line-items";
 import QuotePreview from "@/components/quotes/quote-preview";
+import PriceBookPicker from "@/components/price-book/price-book-picker";
 import {
   Plus,
   X,
@@ -68,6 +69,7 @@ export default function QuotesPage() {
   const [formNotes, setFormNotes] = useState("");
   const [formValidDays, setFormValidDays] = useState("30");
   const [formItems, setFormItems] = useState<QuoteLineItem[]>([]);
+  const [showPriceBook, setShowPriceBook] = useState(false);
 
   const fetchQuotes = useCallback(async () => {
     setLoading(true);
@@ -601,7 +603,36 @@ export default function QuotesPage() {
                 </div>
 
                 {/* Line items */}
-                <QuoteLineItems items={formItems} onChange={setFormItems} />
+                <div className="space-y-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowPriceBook(true)}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 hover:text-brand-600 hover:border-brand-300 transition"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    Add from Price Book
+                  </button>
+                  <QuoteLineItems items={formItems} onChange={setFormItems} />
+                  {showPriceBook && (
+                    <PriceBookPicker
+                      onSelect={(item) => {
+                        setFormItems((prev) => [
+                          ...prev,
+                          {
+                            description: item.name,
+                            quantity: 1,
+                            unitPrice: item.unitPrice,
+                            total: item.unitPrice,
+                            optional: false,
+                            category: item.category,
+                          },
+                        ]);
+                        setShowPriceBook(false);
+                      }}
+                      onClose={() => setShowPriceBook(false)}
+                    />
+                  )}
+                </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>

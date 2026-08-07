@@ -488,6 +488,19 @@ model BillingSplit {
   updatedAt      DateTime @updatedAt
 }
 
+model PriceItem {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  category    String   @default("LABOR") // CARPET, PAD, LABOR, REMOVAL, REPAIR, TREATMENT, OTHER
+  unit        String   @default("SQFT") // SQFT, LNFT, HOUR, EACH, JOB, GAL
+  unitPrice   Float    @default(0)
+  taxable     Boolean  @default(true)
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
 model WorkOrderItem {
   id            String      @id @default(cuid())
   workOrderId   String

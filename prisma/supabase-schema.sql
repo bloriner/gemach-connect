@@ -216,3 +216,22 @@ ALTER TABLE "WorkOrder" ADD COLUMN IF NOT EXISTS "billingNotes" TEXT;
 
 CREATE INDEX IF NOT EXISTS idx_billingsplit_workOrderId ON "BillingSplit"("workOrderId");
 CREATE INDEX IF NOT EXISTS idx_billingsplit_invoiceId ON "BillingSplit"("invoiceId");
+
+-- ============================================
+-- P2.6: Price Book — PriceItem table
+-- ============================================
+CREATE TABLE IF NOT EXISTS "PriceItem" (
+    "id" TEXT PRIMARY KEY,
+    "name" TEXT NOT NULL,
+    "description" TEXT,
+    "category" TEXT NOT NULL DEFAULT 'LABOR',
+    "unit" TEXT NOT NULL DEFAULT 'SQFT',
+    "unitPrice" DOUBLE PRECISION NOT NULL DEFAULT 0,
+    "taxable" BOOLEAN NOT NULL DEFAULT true,
+    "active" BOOLEAN NOT NULL DEFAULT true,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT NOW(),
+    "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_priceitem_category ON "PriceItem"("category");
+CREATE INDEX IF NOT EXISTS idx_priceitem_active ON "PriceItem"("active");

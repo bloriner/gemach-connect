@@ -31,6 +31,7 @@ const navigation = [
       { name: "Orders", href: "/orders", icon: ClipboardList },
       { name: "Quotes", href: "/quotes", icon: FileText },
       { name: "Agreements", href: "/agreements", icon: RefreshCw },
+      { name: "Price Book", href: "/price-book", icon: DollarSign },
       { name: "Calendar", href: "/calendar", icon: Calendar },
       { name: "Technicians", href: "/crews", icon: Users },
       { name: "Field Tracking", href: "/field", icon: MapPin },

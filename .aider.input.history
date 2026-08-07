@@ -1751,3 +1751,508 @@
 
 # 2026-08-07T02:09:06.095Z
 +y
+
+# 2026-08-07T02:12:54.276Z
++yep
+
+# 2026-08-07T02:14:24.264Z
++yes
+
+# 2026-08-07T02:21:02.387Z
++i want to continue this one by one but first fix this :  Application error: a server-side exception has occurred (see the server logs for more information).
++Digest: 921706511
+
+# 2026-08-07T02:23:52.736Z
++Deployments
++
++6QfUiicEm
++
++
++
++Deployment
++
++Logs
++
++Resources
++
++Source
++
++Open Graph
++
++Deployment Details
++
++Build Failed
++
++Command "npm run build" exited with 1
++
++Created
++
++github/bloriner
++
++bloriner
++
++4m ago
++
++Status
++
++Error
++
++Latest
++
++Duration
++
++26s
++
++4m ago
++
++Environment
++
++Production
++
++Domains
++
++premier-pro-services-git-master-bloriners-projects.vercel.app
++
++premier-pro-services-8oubws7cb-bloriners-projects.vercel.app
++
++Source
++
++master
++
++fedbbee
++
++P2.6: Price Book — productized catalog with categories, per-unit pricing, searchable picker for quot…
++
++
++
++Deployment Settings
++
++2 Recommendations
++
++Build Logs
++
++26s
++
++50 lines
++
++
++
++4
++
++Find in logs
++
++CtrlF
++
++Running build in Washington, D.C., USA (East) – iad1
++
++Build machine configuration: 2 cores, 8 GB
++
++Cloning github.com/bloriner/gemach-connect (Branch: master, Commit: fedbbee)
++
++Cloning completed: 492.000ms
++
++Restored build cache from previous deployment (FHoWbvwHr22ZtkEj4QZJ6AMHPARh)
++
++Running "vercel build"
++
++Vercel CLI 58.1.0
++
++Installing dependencies...
++
++> premier-pro-services@0.1.0 postinstall
++
++> prisma generate
++
++Prisma schema loaded from prisma/schema.prisma
++
++✔ Generated Prisma Client (v5.22.0) to ./node_modules/@prisma/client in 379ms
++
++Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
++
++Tip: Easily identify and fix slow SQL queries in your app. Optimize helps you enhance your visibility: https://pris.ly/--optimize
++
++up to date in 2s
++
++
++
+
+# 2026-08-07T02:26:19.482Z
++Error: SQL query ran into an upstream timeout
++
++
++
++You can either optimize your query, or increase the statement timeout or connect to your database directly.
++
+
+# 2026-08-07T02:26:54.695Z
++Success. No rows returned
+
+# 2026-08-07T02:27:18.359Z
++success
+
+# 2026-08-07T02:27:55.709Z
++Success. No rows returned
+
+# 2026-08-07T02:30:08.061Z
++Application error: a server-side exception has occurred (see the server logs for more information).
++
++Digest: 3808989070
+
+# 2026-08-07T02:32:35.401Z
++Success. No rows returned
+
+# 2026-08-07T02:34:50.684Z
++Application error: a server-side exception has occurred (see the server logs for more information).
++
++Digest: 3720638735
++
+
+# 2026-08-07T02:37:55.710Z
++
++
++Aug 06 22:34:30.67
++
++GET
++
++200
++
++premier-pro-services.vercel.app
++
++/dashboard
++
++PrismaClientKnownRequestError: 
++
++ 
++
++Invalid `prisma.workOrder.findMany()` invocation:
++
++ 
++
++ 
++
++ 
++
++The column `Customer.passwordHash` does not exist in the current database.
++
++ 
++
++    at $n.handleRequestError (/var/task/node_modules/@prisma/client/runtime/library.js:121:7315)
++
++ 
++
++    at $n.handleAndLogRequestError (/var/task/node_modules/@prisma/client/runtime/library.js:121:6623)
++
++ 
++
++    at $n.request (/var/task/node_modules/@prisma/client/runtime/library.js:121:6307)
++
++ 
++
++    at async l (/var/task/node_modules/@prisma/client/runtime/library.js:130:9633)
++
++ 
++
++    at async Promise.all (index 4)
++
++ 
++
++    at async u (/var/task/.next/server/app/(dashboard)/dashboard/page.js:1:3226) {
++
++ 
++
++  code: 'P2022',
++
++ 
++
++  clientVersion: '5.22.0',
++
++ 
++
++  meta: { modelName: 'WorkOrder', column: 'Customer.passwordHash' },
++
++ 
++
++  digest: '3720638735'
++
++ 
++
++}
++
++Aug 06 22:34:30.52
++
++GET
++
++200
++
++premier-pro-services.vercel.app
++
++/dashboard
++
++PrismaClientKnownRequestError: 
++
++ 
++
++Invalid `prisma.workOrder.findMany()` invocation:
++
++ 
++
++ 
++
++ 
++
++The column `Customer.passwordHash` does not exist in the current database.
++
++ 
++
++    at $n.handleRequestError (/var/task/node_modules/@prisma/client/runtime/library.js:121:7315)
++
++ 
++
++    at $n.handleAndLogRequestError (/var/task/node_modules/@prisma/client/runtime/library.js:121:6623)
++
++ 
++
++    at $n.request (/var/task/node_modules/@prisma/client/runtime/library.js:121:6307)
++
++ 
++
++    at async l (/var/task/node_modules/@prisma/client/runtime/library.js:130:9633)
++
++ 
++
++    at async Promise.all (index 4)
++
++ 
++
++    at async u (/var/task/.next/server/app/(dashboard)/dashboard/page.js:1:3226) {
++
++ 
++
++  code: 'P2022',
++
++ 
++
++  clientVersion: '5.22.0',
++
++ 
++
++  meta: { modelName: 'WorkOrder', column: 'Customer.passwordHash' },
++
++ 
++
++  digest: '3720638735'
++
++ 
++
++}
++
++No more logs to show within selected timeline
++
+
+# 2026-08-07T02:39:39.490Z
++Success. No rows returned
+
+# 2026-08-07T02:40:23.364Z
++done
+
+# 2026-08-07T02:42:24.474Z
++that seemed to have worked. before we continue please give me a login so i can test out the customer portal
+
+# 2026-08-07T02:44:43.350Z
++I tried placing an order and got this: Failed to execute 'json' on 'Response': Unexpected end of JSON input
+
+# 2026-08-07T02:46:29.224Z
++success  ...................but i got that error again while placing an order
+
+# 2026-08-07T02:49:00.451Z
++Aug 06 22:46:05.85
++
++POST
++
++500
++
++premier-pro-services.vercel.app
++
++/api/portal/orders
++
++⨯ PrismaClientKnownRequestError: 
++
++ 
++
++Invalid `prisma.workOrder.create()` invocation:
++
++ 
++
++ 
++
++ 
++
++Null constraint violation on the fields: (`createdById`)
++
++ 
++
++    at $n.handleRequestError (/var/task/node_modules/@prisma/client/runtime/library.js:121:7315)
++
++ 
++
++    at $n.handleAndLogRequestError (/var/task/node_modules/@prisma/client/runtime/library.js:121:6623)
++
++ 
++
++    at $n.request (/var/task/node_modules/@prisma/client/runtime/library.js:121:6307)
++
++ 
++
++    at async l (/var/task/node_modules/@prisma/client/runtime/library.js:130:9633)
++
++ 
++
++    at async c (/var/task/.next/server/app/api/portal/orders/route.js:1:1593)
++
++ 
++
++    at async /var/task/node_modules/next/dist/compiled/next-server/app-route.runtime.prod.js:6:38411
++
++ 
++
++    at async e_.execute (/var/task/node_modules/next/dist/compiled/next-server/app-route.runtime.prod.js:6:27880)
++
++ 
++
++    at async e_.handle (/var/task/node_modules/next/dist/compiled/next-server/app-route.runtime.prod.js:6:39943)
++
++ 
++
++    at async en (/var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:16:25561)
++
++ 
++
++    at async ea.responseCache.get.routeKind (/var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:17:1028) {
++
++ 
++
++  code: 'P2011',
++
++ 
++
++  clientVersion: '5.22.0',
++
++ 
++
++  meta: { modelName: 'WorkOrder', constraint: [ 'createdById' ] }
++
++ 
++
++}
++
++Aug 06 22:45:42.81
++
++GET
++
++200
++
++premier-pro-services.vercel.app
++
++/api/portal/orders
++
++Aug 06 22:44:14.26
++
++POST
++
++500
++
++premier-pro-services.vercel.app
++
++/api/portal/orders
++
++⨯ PrismaClientKnownRequestError: 
++
++ 
++
++Invalid `prisma.workOrder.create()` invocation:
++
++ 
++
++ 
++
++ 
++
++Null constraint violation on the fields: (`createdById`)
++
++ 
++
++    at $n.handleRequestError (/var/task/node_modules/@prisma/client/runtime/library.js:121:7315)
++
++ 
++
++    at $n.handleAndLogRequestError (/var/task/node_modules/@prisma/client/runtime/library.js:121:6623)
++
++ 
++
++    at $n.request (/var/task/node_modules/@prisma/client/runtime/library.js:121:6307)
++
++ 
++
++    at async l (/var/task/node_modules/@prisma/client/runtime/library.js:130:9633)
++
++ 
++
++    at async c (/var/task/.next/server/app/api/portal/orders/route.js:1:1593)
++
++ 
++
++    at async /var/task/node_modules/next/dist/compiled/next-server/app-route.runtime.prod.js:6:38411
++
++ 
++
++    at async e_.execute (/var/task/node_modules/next/dist/compiled/next-server/app-route.runtime.prod.js:6:27880)
++
++ 
++
++    at async e_.handle (/var/task/node_modules/next/dist/compiled/next-server/app-route.runtime.prod.js:6:39943)
++
++ 
++
++    at async en (/var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:16:25561)
++
++ 
++
++    at async ea.responseCache.get.routeKind (/var/task/node_modules/next/dist/compiled/next-server/server.runtime.prod.js:17:1028) {
++
++ 
++
++  code: 'P2011',
++
++ 
++
++  clientVersion: '5.22.0',
++
++ 
++
++  meta: { modelName: 'WorkOrder', constraint: [ 'createdById' ] }
++
++ 
++
++}
++
++Aug 06 22:43:36.34
++
++GET
++
++200
++
++premier-pro-services.vercel.app
++
++/api/portal/orders
++
++No more logs to show within selected timeline
++
+
+# 2026-08-07T02:49:34.385Z
++success
+
+# 2026-08-07T02:50:25.275Z
++when an order is placed all parties should get an email
+
+# 2026-08-07T02:50:47.752Z
++y

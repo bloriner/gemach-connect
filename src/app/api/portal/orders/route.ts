@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { sendEmail, newOrderCustomerTemplate, newOrderInternalTemplate } from "@/lib/email";
 
 function getPortalToken(request: NextRequest): string | null {
   return request.headers.get("x-portal-token");
@@ -93,6 +94,46 @@ export async function POST(request: NextRequest) {
       serviceType: true,
     },
   });
+
+  // Send confirmation emails (fire-and-forget — don't block response)
+  const scheduledStr = scheduledDate
+    ? new Date(scheduledDate).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })
+    : undefined;
+
+  // 1. Confirmation to customer
+  if (customer.email) {
+    sendEmail({
+      to: customer.email,
+      subject: `Order Confirmation — ${order.orderNumber}`,
+      html: newOrderCustomerTemplate({
+        customerName: customer.contactName || customer.companyName,
+        orderNumber: order.orderNumber,
+        propertyAddress: property.address,
+        serviceName: order.serviceType.name,
+        scheduledDate: scheduledStr,
+      }),
+    }).catch((err) => console.error("[EMAIL] Customer confirmation failed:", err));
+  }
+
+  // 2. Notification to all admin/office staff
+  prisma.user.findMany({
+    where: { role: { in: ["ADMIN", "OFFICE_STAFF"] }, active: true },
+    select: { email: true, name: true },
+  }).then((staff) => {
+    staff.forEach((user) => {
+      sendEmail({
+        to: user.email,
+        subject: `New Order — ${order.orderNumber} from ${customer.companyName}`,
+        html: newOrderInternalTemplate({
+          customerName: customer.companyName,
+          orderNumber: order.orderNumber,
+          propertyAddress: property.address,
+          serviceName: order.serviceType.name,
+          scheduledDate: scheduledStr,
+        }),
+      }).catch((err) => console.error("[EMAIL] Staff notification failed:", err));
+    });
+  }).catch((err) => console.error("[EMAIL] Staff lookup failed:", err));
 
   return NextResponse.json(order, { status: 201 });
 }
