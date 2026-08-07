@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Lock, CheckCircle2, Loader2 } from "lucide-react";
 
-export default function SetPasswordPage() {
+function SetPasswordForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
@@ -52,7 +52,6 @@ export default function SetPasswordPage() {
       setCompanyName(data.customer.companyName);
       setSuccess(true);
 
-      // Auto-login after 2 seconds
       setTimeout(() => {
         document.cookie = `portal-token=${data.portalToken}; path=/; max-age=86400; SameSite=Lax`;
         router.push("/portal/dashboard");
@@ -138,5 +137,17 @@ export default function SetPasswordPage() {
         </form>
       </div>
     </div>
+  );
+}
+
+export default function SetPasswordPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="h-8 w-8 animate-spin text-brand-600" />
+      </div>
+    }>
+      <SetPasswordForm />
+    </Suspense>
   );
 }
