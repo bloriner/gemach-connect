@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import { cn } from "@/lib/utils";
 import { Logo } from "@/components/ui/logo";
+import { isNavAllowed, ROLE_LABEL, ROLE_COLOR, type UserRole } from "@/lib/roles";
 import {
   LayoutDashboard,
   ClipboardList,
@@ -74,6 +75,15 @@ interface SidebarProps {
 export function Sidebar({ mobileOpen, onClose }: SidebarProps) {
   const pathname = usePathname();
   const { data: session } = useSession();
+  const role = (session?.user as any)?.role as UserRole | undefined;
+
+  // Filter navigation by role
+  const filteredNav = navigation
+    .map((section) => ({
+      ...section,
+      items: section.items.filter((item) => isNavAllowed(role, item.href)),
+    }))
+    .filter((section) => section.items.length > 0);
 
   const sidebarContent = (
     <div className="flex h-full flex-col">
@@ -92,7 +102,7 @@ export function Sidebar({ mobileOpen, onClose }: SidebarProps) {
 
       {/* Navigation */}
       <nav className="flex-1 mt-4 space-y-6 px-3 pb-8 overflow-y-auto">
-        {navigation.map((section) => (
+        {filteredNav.map((section) => (
           <div key={section.section}>
             <p className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-slate-400">
               {section.section}
@@ -128,6 +138,11 @@ export function Sidebar({ mobileOpen, onClose }: SidebarProps) {
           <div className="text-sm">
             <p className="font-medium text-slate-900 truncate">{session.user.name}</p>
             <p className="text-slate-500 truncate text-xs">{session.user.email}</p>
+            {role && (
+              <span className={`inline-block mt-1 rounded-full px-2 py-0.5 text-[10px] font-semibold ${ROLE_COLOR[role] ?? "bg-slate-100 text-slate-600"}`}>
+                {ROLE_LABEL[role] ?? role}
+              </span>
+            )}
           </div>
           <button
             onClick={() => signOut({ callbackUrl: "/" })}

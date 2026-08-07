@@ -6,6 +6,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { Sidebar } from "./sidebar";
 import { Logo } from "@/components/ui/logo";
 import { Menu } from "lucide-react";
+import { isNavAllowed, getDefaultRoute } from "@/lib/roles";
 
 const pageTitles: Record<string, string> = {
   "/dashboard": "Dashboard",
@@ -48,6 +49,16 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   if (status === "unauthenticated") {
     router.push("/");
     return null;
+  }
+
+  // Role-based route protection
+  const role = (session?.user as any)?.role;
+  if (status === "authenticated" && role && pathname) {
+    if (!isNavAllowed(role, pathname)) {
+      const defaultRoute = getDefaultRoute(role);
+      router.replace(defaultRoute);
+      return null;
+    }
   }
 
   // Get page title (handles /invoicing/123 style paths)
