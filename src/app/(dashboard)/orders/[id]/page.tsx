@@ -14,7 +14,6 @@ import {
   Calendar,
   DollarSign,
   Clock,
-  Truck,
   CheckCircle2,
   XCircle,
   Send,
@@ -24,7 +23,10 @@ import {
   Receipt,
   Package,
   AlertCircle,
+  Camera,
 } from "lucide-react";
+import PhotoUploader from "@/components/orders/photo-uploader";
+import PhotoGrid from "@/components/orders/photo-grid";
 
 // ── Types ──
 interface Crew {
@@ -93,6 +95,16 @@ export default function OrderDetailPage() {
   const [scheduledDate, setScheduledDate] = useState("");
   const [notes, setNotes] = useState("");
   const [notifyCustomer, setNotifyCustomer] = useState(true);
+  const [photos, setPhotos] = useState<Photo[]>([]);
+
+  type Photo = { id: string; url: string; type: string; caption: string | null; lat: number | null; lng: number | null; takenAt: string; user: { name: string } };
+
+  const fetchPhotos = () => {
+    fetch(`/api/field/photos?workOrderId=${id}`)
+      .then((r) => r.json())
+      .then(setPhotos)
+      .catch(() => {});
+  };
 
   useEffect(() => {
     fetch(`/api/orders/${id}`)
@@ -107,6 +119,7 @@ export default function OrderDetailPage() {
         setNotes(data.order.notes || "");
         setLoading(false);
       });
+    fetchPhotos();
   }, [id]);
 
   const showToast = (msg: string) => {
@@ -355,6 +368,19 @@ export default function OrderDetailPage() {
                   </div>
                 </div>
               )}
+            </CardContent>
+          </Card>
+
+          {/* Photos */}
+          <Card>
+            <CardContent className="p-5">
+              <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-700 mb-3">
+                <Camera className="h-4 w-4 text-slate-400" /> Job Photos
+              </h3>
+              <PhotoUploader workOrderId={id} onUploaded={fetchPhotos} />
+              <div className="mt-4">
+                <PhotoGrid photos={photos} />
+              </div>
             </CardContent>
           </Card>
 
