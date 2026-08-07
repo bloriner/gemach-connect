@@ -21,6 +21,7 @@ import {
   X,
   RefreshCw,
   Loader2,
+  CreditCard,
 } from "lucide-react";
 
 // ── Types ──────────────────────────────────────────────
@@ -103,6 +104,7 @@ export default function PortalDashboardPage() {
   const [orderSubmitting, setOrderSubmitting] = useState(false);
   const [orderError, setOrderError] = useState("");
   const [orderSuccess, setOrderSuccess] = useState("");
+  const [payLoading, setPayLoading] = useState<string | null>(null); // invoiceId being paid
 
   // Read token from cookie on mount
   useEffect(() => {
@@ -216,6 +218,27 @@ export default function PortalDashboardPage() {
   const handleLogout = () => {
     clearPortalToken();
     router.push("/portal");
+  };
+
+  const handlePayInvoice = async (invoiceId: string) => {
+    if (!token) return;
+    setPayLoading(invoiceId);
+    try {
+      const res = await fetch(`/api/portal/invoices/${invoiceId}/pay`, {
+        method: "POST",
+        headers: { "x-portal-token": token, "Content-Type": "application/json" },
+      });
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        alert(data.error || "Payment failed to start");
+        setPayLoading(null);
+      }
+    } catch {
+      alert("Payment failed to start");
+      setPayLoading(null);
+    }
   };
 
   // ── Financial summary ──────────────────────────────
@@ -429,6 +452,28 @@ export default function PortalDashboardPage() {
                           <span className="text-xs text-green-600">Paid in full</span>
                         )}
                       </div>
+                      {balance > 0 && invoice.status !== "CANCELLED" && (
+                        <div className="mt-3">
+                          <Button
+                            size="sm"
+                            className="w-full"
+                            onClick={() => handlePayInvoice(invoice.id)}
+                            disabled={payLoading === invoice.id}
+                          >
+                            {payLoading === invoice.id ? (
+                              <>
+                                <Loader2 className="mr-2 h-3 w-3 animate-spin" />
+                                Redirecting...
+                              </>
+                            ) : (
+                              <>
+                                <CreditCard className="mr-2 h-3 w-3" />
+                                Pay Now — {formatCurrency(balance)}
+                              </>
+                            )}
+                          </Button>
+                        </div>
+                      )}
                     </div>
                   );
                 })}
