@@ -1652,3 +1652,96 @@
 
 # 2026-08-06T21:21:23.525Z
 +i guess in order. your call. just do it in an order that makes sense with the best code. and qa it all that it is working properly, secure and nice UI and user friendly
+
+# 2026-08-06T21:29:25.475Z
++Proceed.
+
+# 2026-08-06T21:41:40.654Z
++can you deploy this on vercel and give me a link to view it?
+
+# 2026-08-06T21:50:53.351Z
++why is it deployed on the gemach connect project.....? also those demo login credentials dont work
+
+# 2026-08-06T21:59:32.810Z
++hmmm...i still cant sigin
+
+# 2026-08-06T22:08:45.625Z
++after logging in i'm getting this:  Application error: a server-side exception has occurred (see the server logs for more information).
++Digest: 279958104
+
+# 2026-08-06T22:12:36.251Z
++Application error: a server-side exception has occurred (see the server logs for more information).
++
++Digest: 2098649238
+
+# 2026-08-06T22:20:43.457Z
++nothing happens when i click invoice
+
+# 2026-08-06T22:25:21.616Z
++yes. make it nice and robust. also check all over the website to make sure there are no dead buttons
+
+# 2026-08-06T22:27:42.929Z
++yes. but onemore thing. this is all for the employees to login. i think we should also make for a customer portal and from the main landing page they can create an account. and put in an order, track orders etc.   it should feed straight into our invoicing etc
+
+# 2026-08-06T22:33:25.577Z
++y
+
+# 2026-08-06T22:46:55.690Z
++i want the offer section not to just be like able to integrate with docusign. i want an internal docusign.....i should be able to attach documents to send and get electronicaly signed. it should timestamp them when signed, include the IP addresses, email both parties (us that we are sending and the one receiving it) each step of the way...send out reminders...include the PDF as an attachment, save the documets on our portal etcc....i want this to be a robust system
+
+# 2026-08-06T22:48:26.857Z
++Proceed.
+
+# 2026-08-06T23:01:12.161Z
++i want you to look at Jobber, Housecall Pro, serviccetitan and think deeply of the features ththey have for me to consider adding. also I want servicemonster.com type of features and albiware.com
+
+# 2026-08-06T23:04:33.508Z
++all of them. you pick the order. they have to be built with you wearing a high level architect hat, as if you are a whole qa team debugging and making sure everything actually works well, a UI team extradinore
+
+# 2026-08-06T23:22:44.972Z
++yes but it should probably also have an option to add work, like if the technician upsells and does another service....
+
+# 2026-08-06T23:43:38.635Z
++yes
+
+# 2026-08-07T00:09:02.794Z
++i cant set up twilio yet so for now lets do email....what did you need me to do in supabase?
+
+# 2026-08-07T00:10:54.576Z
++before you go ahead....can you do this for me in su[pabase?]
+
+# 2026-08-07T00:14:29.952Z
++wait i cant find that project in supabase? which is it? did i do this project under a differant name?
+
+# 2026-08-07T00:16:01.268Z
++Success. No rows returned    ................so continue
+
+# 2026-08-07T00:18:43.727Z
++y
+
+# 2026-08-07T00:24:04.963Z
++continue
+
+# 2026-08-07T00:25:42.363Z
++y
+
+# 2026-08-07T00:28:48.618Z
++k. whats next on the list?
+
+# 2026-08-07T00:29:55.731Z
++Proceed.
+
+# 2026-08-07T01:49:51.802Z
++k. go for it
+
+# 2026-08-07T01:53:04.848Z
++y
+
+# 2026-08-07T02:00:24.346Z
++go
+
+# 2026-08-07T02:02:10.677Z
++y
+
+# 2026-08-07T02:06:36.593Z
++before the next task. i dont see any of these updates...are you deplying these on vercel? please always deploy

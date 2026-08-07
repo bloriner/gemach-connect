@@ -8,11 +8,13 @@ import { Logo } from "@/components/ui/logo";
 import { Menu } from "lucide-react";
 
 const pageTitles: Record<string, string> = {
-  "/": "Dashboard",
+  "/dashboard": "Dashboard",
   "/orders": "Orders",
+  "/quotes": "Quotes",
   "/calendar": "Calendar",
   "/crews": "Technicians",
   "/field": "Field Tracking",
+  "/tracking": "Live Tracking",
   "/accounting": "Accounting",
   "/invoicing": "Invoicing",
   "/expenses": "Expenses",

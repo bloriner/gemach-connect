@@ -7,3 +7,4 @@ prisma/dev.db-journal
 .env
 .aider*
 .aider-desk/
+.vercel

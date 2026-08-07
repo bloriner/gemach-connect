@@ -1,0 +1,2 @@
+y
+"postgresql://postgres.scasvpawjioumxpwffqz:exR2r2iSb%3F%24q%258f@aws-0-us-east-1.pooler.supabase.com:5432/postgres"

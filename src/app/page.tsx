@@ -30,7 +30,7 @@ export default function LoginPage() {
       return;
     }
 
-    router.push("/");
+    router.push("/dashboard");
     router.refresh();
   };
 
@@ -134,6 +134,15 @@ export default function LoginPage() {
           <div className="mt-6 rounded-lg bg-slate-50 border border-slate-200 px-4 py-3">
             <p className="text-xs font-medium text-slate-500 mb-1">Demo Credentials</p>
             <p className="text-xs text-slate-600 font-mono">admin@premierpro.com / admin123</p>
+          </div>
+
+          <div className="mt-8 pt-6 border-t border-slate-200 text-center">
+            <p className="text-sm text-slate-500">
+              Are you a customer?{" "}
+              <a href="/portal" className="font-medium text-brand-600 hover:text-brand-700">
+                Access the Customer Portal
+              </a>
+            </p>
           </div>
         </div>
       </div>

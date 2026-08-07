@@ -1,13 +1,17 @@
-# Gemach Connect
+# Premier Pro Services
 
-A directory platform for Jewish community members to find and list **Gemachs** — free lending organizations — across North America. Browse, search, register, list your own gemachs, send donation offers, and message organizers.
+Commercial real estate field service management platform. Carpet, janitorial, and property services — streamlined for teams of 13+ technicians with full mobile support.
+
+**Live:** [https://premier-pro-services.vercel.app](https://premier-pro-services.vercel.app)
 
 ## Tech Stack
 
 - **Next.js 14** (App Router) + **TypeScript**
-- **Prisma ORM** + **SQLite** (`prisma/dev.db`)
+- **Prisma ORM** + **Supabase PostgreSQL**
 - **NextAuth v4** (Credentials provider, JWT strategy)
 - **Tailwind CSS**
+- Leaflet + react-leaflet (GPS tracking)
+- QRCode (equipment tracking)
 - bcryptjs, zod, lucide-react, sonner, date-fns
 
 ## Quick Start
@@ -23,69 +27,90 @@ Visit [http://localhost:3000](http://localhost:3000)
 
 ## Demo Login
 
-| Email | Password |
-|---|---|
-| `demo@gemach.app` | `demo1234` |
+| Email | Password | Role |
+|---|---|---|
+| `admin@premierpro.com` | `admin123` | Admin |
+| `ops@premierpro.com` | `admin123` | Ops Manager |
+| `billing@premierpro.com` | `admin123` | Billing |
+| `james.mitchell@premierpro.com` | `tech123` | Technician |
 
 ## Features
 
-- 🔍 **Browse & Search** — Filter gemachs by category, state, and keyword
-- ❤️ **Favorites** — Bookmark gemachs for quick access
-- 📦 **Offers** — Submit donation offers with status workflow (pending → accepted → completed)
-- 💬 **Two-pane Messaging** — Threaded conversations between donors and gemach owners
-- 🕐 **"Open Now"** — Live status computed from structured weekly hours
-- 📱 **Responsive** — Works on mobile, tablet, and desktop
-- 🔐 **Owner-only permissions** — Enforced on both API and UI
+- 📸 **Photo Capture** — Technicians take arrival/job photos via mobile camera
+- 🗺️ **GPS Tracking** — Live van tracking with 15s location updates on Leaflet maps
+- 📋 **Field Orders** — Full mobile order management (accept, arrive, complete) on phones/tablets
+- 💰 **Auto Invoicing** — Invoice auto-generated on job completion with PDF download
+- 📊 **Reports Dashboard** — Revenue, expenses, profit margin, invoice aging, service breakdowns
+- 🏷️ **QR Equipment Tracking** — Generate QR codes for equipment deployed at worksites
+- 📝 **HR / Offer Letters** — Create and send offer letters with DocuSign-ready templates
+- 🔐 **Role-based Access** — Admin, Office Staff, Crew Lead roles with permission guards
+- 📱 **PWA** — Installable on mobile devices with offline manifest
 
 ## Pages
 
 | Route | Purpose |
 |---|---|
-| `/` | Public landing |
-| `/login` | Sign in |
-| `/register` | Create account |
+| `/` | Login page |
 | `/dashboard` | Stats overview |
-| `/dashboard/my-gemachs` | Manage your listings |
-| `/dashboard/new` | Create a gemach |
-| `/dashboard/edit/[id]` | Edit a gemach |
-| `/dashboard/requests` | Incoming & outgoing offers |
-| `/dashboard/messages` | Two-pane messaging inbox |
-| `/dashboard/saved` | Bookmarked gemachs |
-| `/dashboard/profile` | User profile |
-| `/gemachs` | Browse & discover |
-| `/gemachs/[id]` | Gemach detail + contact |
+| `/orders` | Work order management |
+| `/field` | Technician field tracking (camera, GPS, time entries) |
+| `/tracking` | Live GPS map of all technician vans |
+| `/crews` | Crew & technician management |
+| `/calendar` | Scheduling calendar |
+| `/invoicing` | Invoice list |
+| `/invoicing/[id]` | Invoice detail + PDF |
+| `/expenses` | Expense tracking |
+| `/accounting` | Accounting overview |
+| `/reports` | Analytics dashboard |
+| `/equipment` | QR code equipment management |
+| `/hr` | Offer letters & HR |
+| `/settings` | App settings |
+| `/portal` | Customer portal login |
+| `/portal/dashboard` | Customer-facing dashboard |
 
 ## API Routes
 
 | Method | Route | Auth |
 |---|---|---|
 | `POST` | `/api/auth/[...nextauth]` | Cookie |
-| `POST` | `/api/register` | Public |
-| `GET/POST` | `/api/gemachs` | POST requires session |
-| `GET/PUT/DELETE` | `/api/gemachs/[id]` | PUT/DELETE owner only |
-| `GET` | `/api/favorites` | Session |
-| `POST` | `/api/favorites` (toggle) | Session |
-| `GET/POST` | `/api/offers` | Session |
-| `PATCH/DELETE` | `/api/offers/[id]` | Status: owner; edit: donor |
-| `GET/POST` | `/api/threads` | Session |
-| `GET/POST` | `/api/threads/[id]` | Participants only |
-| `GET/POST` | `/api/messages` | Session |
+| `GET` | `/api/orders/active` | Session |
+| `POST` | `/api/orders/complete` | Session |
+| `POST` | `/api/field-notes` | Session |
+| `POST` | `/api/time-entries` | Session |
+| `GET/POST` | `/api/crew/location` | Session |
+| `GET/POST` | `/api/equipment` | Session |
+| `PATCH/DELETE` | `/api/equipment/[id]` | Session |
+| `GET` | `/api/equipment/[id]/qr` | Session |
+| `GET/POST` | `/api/offer-letters` | Session |
+| `PATCH` | `/api/offer-letters/[id]` | Session |
+| `POST` | `/api/offer-letters/[id]/send` | Session |
+| `GET` | `/api/invoice/[id]/pdf` | Session |
+| `POST` | `/api/upload` | Session |
 
 ## Data Model
 
-- **User** — name, email, password, phone, city, state
-- **Gemach** — name, category, address, hours (JSON), needs (JSON), pickup notes, options
-- **Offer** — donation offer with status workflow (pending/accepted/completed/declined)
-- **Thread** — 1:1 conversation scoped to gemach+user, unique constraint
-- **Message** — body, sender, timestamp within a thread
-- **Favorite** — user+gemach composite key
+- **User** — email, name, password, role (ADMIN/OFFICE_STAFF/CREW_LEAD/CUSTOMER), phone
+- **Crew** — name, lead, vehicle info, live GPS coordinates
+- **Customer** — company name, contact, billing address, portal token
+- **Property** — address, access notes, linked to customer
+- **ServiceType** — name, description, base price, checklist template
+- **WorkOrder** — order number, status, priority, crew assignment, pricing
+- **Invoice** — auto-generated on completion, with line items, tax, payments
+- **FieldNote** — photos, notes, issues, signatures from the field
+- **TimeEntry** — arrival, departure, break timestamps
+- **Equipment** — QR code, type, status, deployed location
+- **OfferLetter** — position, salary, HTML template, signature status
+- **Expense** — vendor, category, amount, linked to work order
 
 ## Deployment
 
-Deploy to Vercel with a single click. Ensure `prisma db push` runs on each deploy (included in `npm run build`).
+Deploy to Vercel:
 
-For production, switch to PostgreSQL via `DATABASE_URL` in `.env` and update the Prisma datasource.
+```bash
+npx vercel --prod --yes
+```
 
-## License
-
-MIT
+Environment variables on Vercel:
+- `DATABASE_URL` — Supabase PostgreSQL connection string
+- `NEXTAUTH_SECRET` — JWT signing secret (min 32 chars)
+- `NEXTAUTH_URL` — Production URL (e.g., `https://premier-pro-services.vercel.app`)

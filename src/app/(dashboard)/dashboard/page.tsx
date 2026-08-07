@@ -188,18 +188,18 @@ export default async function DashboardPage() {
         <CardContent>
           <div className="flex flex-wrap gap-3">
             <a
-              href="/orders/new"
+              href="/orders"
               className="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700"
             >
               <ClipboardList className="h-4 w-4" />
-              New Work Order
+              View Orders
             </a>
             <a
-              href="/invoicing/new"
+              href="/invoicing"
               className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
             >
               <DollarSign className="h-4 w-4" />
-              Generate Invoice
+              Go to Invoicing
             </a>
             <a
               href="/crews"

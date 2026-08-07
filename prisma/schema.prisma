@@ -26,37 +26,53 @@ model User {
   ledCrews     Crew[]       @relation("CrewLead")
   createdOrders WorkOrder[] @relation("OrderCreator")
   expenses     Expense[]
+  signatureDocuments SignatureDocument[] @relation("DocumentSender")
+  jobPhotos    JobPhoto[]
+  completedChecklists JobChecklistItem[] @relation("ChecklistCompleter")
+  submittedForms JobForm[]
+  equipmentCheckouts EquipmentCheckout[] @relation("CheckoutUser")
+  equipmentCheckins  EquipmentCheckout[] @relation("CheckinUser")
+  quotes             Quote[]
+  addedWorkItems     WorkOrderItem[]
 }
 
 model Crew {
-  id          String   @id @default(cuid())
-  name        String
-  vehicleInfo String?
-  leadId      String?
-  lead        User?    @relation("CrewLead", fields: [leadId], references: [id])
-  active      Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id              String    @id @default(cuid())
+  name            String
+  vehicleInfo     String?
+  lat             Float?
+  lng             Float?
+  lastLocationAt  DateTime?
+  leadId          String?
+  lead            User?     @relation("CrewLead", fields: [leadId], references: [id])
+  active          Boolean   @default(true)
+  laborRate       Float     @default(75)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
   members    User[]      @relation()
   workOrders WorkOrder[]
+  vehicle    Vehicle?
 }
 
 model Customer {
   id             String   @id @default(cuid())
   companyName    String
   contactName    String?
-  email          String?
+  email          String?  @unique
   phone          String?
+  passwordHash   String?
   billingAddress String?
   notes          String?
   portalToken    String?  @unique
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  properties Property[]
-  orders     WorkOrder[]
-  invoices   Invoice[]
+  properties         Property[]
+  orders             WorkOrder[]
+  invoices           Invoice[]
+  serviceAgreements  ServiceAgreement[]
+  quotes             Quote[]
 }
 
 model Expense {
@@ -93,7 +109,10 @@ model Property {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  orders WorkOrder[]
+  orders             WorkOrder[]
+  equipment          Equipment[]
+  serviceAgreements  ServiceAgreement[]
+  quotes             Quote[]
 }
 
 model ServiceType {
@@ -106,7 +125,9 @@ model ServiceType {
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
-  orders WorkOrder[]
+  orders             WorkOrder[]
+  workOrderItems     WorkOrderItem[]
+  serviceAgreements  ServiceAgreement[]
 }
 
 model WorkOrder {
@@ -125,22 +146,36 @@ model WorkOrder {
   serviceType   ServiceType @relation(fields: [serviceTypeId], references: [id])
   crewId        String?
   crew          Crew?     @relation(fields: [crewId], references: [id])
-  createdById   String
-  createdBy     User      @relation("OrderCreator", fields: [createdById], references: [id])
+  createdById   String?
+  createdBy     User?     @relation("OrderCreator", fields: [createdById], references: [id])
   price         Float?
+  billingType   String    @default("SINGLE") // SINGLE, SPLIT
+  billingNotes  String?
   completedAt   DateTime?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  timeEntries TimeEntry[]
-  fieldNotes  FieldNote[]
-  invoice     Invoice?
-  expenses    Expense[]
+  timeEntries    TimeEntry[]
+  billingSplits  BillingSplit[]
+  fieldNotes     FieldNote[]
+  invoice        Invoice?
+  expenses       Expense[]
+  equipment      Equipment[]
+  photos         JobPhoto[]
+  checklistItems JobChecklistItem[]
+  forms          JobForm[]
+  equipmentCheckouts EquipmentCheckout[]
+  routeStop       RouteStop?
+  serviceAgreementId String?
+  items           WorkOrderItem[]
+  serviceAgreement   ServiceAgreement? @relation(fields: [serviceAgreementId], references: [id])
+  quoteId         String?   @unique
+  quote           Quote?    @relation("QuoteOrder", fields: [quoteId], references: [id])
 }
 
 model TimeEntry {
   id          String    @id @default(cuid())
-  workOrderId String
+  workOrderId String    @unique
   workOrder   WorkOrder @relation(fields: [workOrderId], references: [id])
   userId      String
   user        User      @relation(fields: [userId], references: [id])
@@ -183,8 +218,9 @@ model Invoice {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
-  items    InvoiceItem[]
-  payments Payment[]
+  items          InvoiceItem[]
+  payments       Payment[]
+  billingSplits  BillingSplit[]
 }
 
 model InvoiceItem {
@@ -207,4 +243,275 @@ model Payment {
   notes       String?
   receivedAt  DateTime @default(now())
   createdAt   DateTime @default(now())
+}
+
+model SignatureDocument {
+  id               String    @id @default(cuid())
+  title            String
+  description      String?
+  documentType     String    @default("OFFER_LETTER") // OFFER_LETTER, CONTRACT, AGREEMENT, OTHER
+  documentUrl      String?   // Original uploaded PDF URL
+  content          String?   // HTML content (for generated docs)
+  signedDocumentUrl String?  // URL to signed/final PDF
+  status           String    @default("DRAFT") // DRAFT, SENT, VIEWED, SIGNED, DECLINED, EXPIRED, CANCELLED
+  recipientName    String
+  recipientEmail   String
+  signToken        String?   @unique // Unique token for public signing link
+  metadata         String?   // JSON: position, salary, startDate, etc.
+  notes            String?
+  senderId         String
+  sender           User      @relation("DocumentSender", fields: [senderId], references: [id])
+  sentAt           DateTime?
+  viewedAt         DateTime?
+  signedAt         DateTime?
+  declinedAt       DateTime?
+  expiresAt        DateTime?
+  reminderSentAt   DateTime?
+  reminderCount    Int       @default(0)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  auditEvents  SignatureAuditEvent[]
+  signature    SignatureData?
+}
+
+model SignatureAuditEvent {
+  id          String    @id @default(cuid())
+  documentId  String
+  document    SignatureDocument @relation(fields: [documentId], references: [id])
+  event       String    // CREATED, SENT, VIEWED, SIGNED, DECLINED, REMINDER_SENT, EXPIRED, CANCELLED
+  ipAddress   String?
+  userAgent   String?
+  details     String?
+  timestamp   DateTime  @default(now())
+}
+
+model SignatureData {
+  id              String    @id @default(cuid())
+  documentId      String    @unique
+  document        SignatureDocument @relation(fields: [documentId], references: [id])
+  signatureSvg    String    // Drawn signature as SVG string
+  signerName      String
+  signerIp        String?
+  signerUserAgent String?
+  timestamp       DateTime  @default(now())
+}
+
+model Equipment {
+  id          String    @id @default(cuid())
+  name        String
+  type        String    // EXTRACTOR, FAN, DEHUMIDIFIER, AIR_SCRUBBER, SPRAYER, OTHER
+  serialNumber String?
+  status      String    @default("AVAILABLE") // AVAILABLE, DEPLOYED, MAINTENANCE, RETIRED
+  location    String?
+  qrCode      String    @unique
+  workOrderId String?
+  workOrder   WorkOrder? @relation(fields: [workOrderId], references: [id])
+  propertyId  String?
+  property    Property?  @relation(fields: [propertyId], references: [id])
+  notes       String?
+  deployedAt  DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  checkouts EquipmentCheckout[]
+}
+
+model EquipmentCheckout {
+  id          String    @id @default(cuid())
+  equipmentId String
+  equipment   Equipment @relation(fields: [equipmentId], references: [id])
+  workOrderId String
+  workOrder   WorkOrder @relation(fields: [workOrderId], references: [id])
+  checkedOutById String
+  checkedOutBy   User    @relation("CheckoutUser", fields: [checkedOutById], references: [id])
+  checkedOutAt   DateTime @default(now())
+  checkedInAt    DateTime?
+  checkedInById  String?
+  checkedInBy    User?   @relation("CheckinUser", fields: [checkedInById], references: [id])
+  notes          String?
+}
+
+model JobPhoto {
+  id          String    @id @default(cuid())
+  workOrderId String
+  workOrder   WorkOrder @relation(fields: [workOrderId], references: [id])
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+  url         String
+  thumbnailUrl String?
+  type        String    @default("GENERAL") // ARRIVAL, IN_PROGRESS, COMPLETION, DAMAGE, EQUIPMENT, GENERAL
+  caption     String?
+  lat         Float?
+  lng         Float?
+  takenAt     DateTime  @default(now())
+  createdAt   DateTime  @default(now())
+}
+
+model JobChecklistItem {
+  id          String    @id @default(cuid())
+  workOrderId String
+  workOrder   WorkOrder @relation(fields: [workOrderId], references: [id])
+  label       String
+  order       Int       @default(0)
+  completed   Boolean   @default(false)
+  completedById String?
+  completedBy   User?    @relation("ChecklistCompleter", fields: [completedById], references: [id])
+  completedAt   DateTime?
+  notes         String?
+  createdAt     DateTime @default(now())
+}
+
+model Vehicle {
+  id           String    @id @default(cuid())
+  name         String
+  make         String?
+  model        String?
+  year         Int?
+  licensePlate String?
+  vin          String?
+  color        String?
+  status       String    @default("ACTIVE") // ACTIVE, MAINTENANCE, OUT_OF_SERVICE
+  crewId       String?   @unique
+  crew         Crew?     @relation(fields: [crewId], references: [id])
+  currentLat   Float?
+  currentLng   Float?
+  lastLocationAt DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  routeStops RouteStop[]
+  locationLogs VehicleLocationLog[]
+}
+
+model VehicleLocationLog {
+  id        String   @id @default(cuid())
+  vehicleId String
+  vehicle   Vehicle  @relation(fields: [vehicleId], references: [id])
+  lat       Float
+  lng       Float
+  speed     Float?
+  heading   Float?
+  accuracy  Float?
+  timestamp DateTime @default(now())
+}
+
+model RouteStop {
+  id          String    @id @default(cuid())
+  vehicleId   String
+  vehicle     Vehicle   @relation(fields: [vehicleId], references: [id])
+  workOrderId String    @unique
+  workOrder   WorkOrder @relation(fields: [workOrderId], references: [id])
+  order       Int       @default(0)
+  estimatedArrival DateTime?
+  actualArrival    DateTime?
+  completed        Boolean  @default(false)
+  notes            String?
+  createdAt        DateTime @default(now())
+}
+
+model ServiceAgreement {
+  id            String    @id @default(cuid())
+  customerId    String
+  customer      Customer  @relation(fields: [customerId], references: [id])
+  propertyId    String?
+  property      Property? @relation(fields: [propertyId], references: [id])
+  serviceTypeId String
+  serviceType   ServiceType @relation(fields: [serviceTypeId], references: [id])
+  frequency     String    // WEEKLY, BIWEEKLY, MONTHLY, QUARTERLY, ANNUALLY
+  price         Float
+  startDate     DateTime
+  endDate       DateTime?
+  status        String    @default("ACTIVE") // ACTIVE, PAUSED, CANCELLED, EXPIRED
+  nextServiceDate DateTime?
+  autoInvoice   Boolean   @default(true)
+  notes         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  generatedOrders WorkOrder[]
+}
+
+model Quote {
+  id            String    @id @default(cuid())
+  quoteNumber   String    @unique
+  customerId    String
+  customer      Customer  @relation(fields: [customerId], references: [id])
+  propertyId    String?
+  property      Property? @relation(fields: [propertyId], references: [id])
+  status        String    @default("DRAFT") // DRAFT, SENT, VIEWED, APPROVED, DECLINED, EXPIRED, CONVERTED
+  subtotal      Float     @default(0)
+  taxRate       Float     @default(6.0)
+  taxAmount     Float     @default(0)
+  total         Float     @default(0)
+  notes         String?
+  validUntil    DateTime?
+  sentAt        DateTime?
+  approvedAt    DateTime?
+  convertedToOrder    WorkOrder? @relation("QuoteOrder")
+  createdById   String
+  createdBy     User      @relation(fields: [createdById], references: [id])
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  items QuoteItem[]
+}
+
+model QuoteItem {
+  id          String  @id @default(cuid())
+  quoteId     String
+  quote       Quote   @relation(fields: [quoteId], references: [id])
+  description String
+  quantity    Float   @default(1)
+  unitPrice   Float   @default(0)
+  total       Float   @default(0)
+  optional    Boolean @default(false)
+  category    String? // LABOR, MATERIALS, EQUIPMENT, OTHER
+}
+
+model BillingSplit {
+  id             String   @id @default(cuid())
+  workOrderId    String
+  workOrder      WorkOrder @relation(fields: [workOrderId], references: [id])
+  partyName      String
+  partyType      String   @default("TENANT") // TENANT, OWNER, PROPERTY_MANAGER, INSURANCE, OTHER
+  splitPercent   Float
+  splitAmount    Float?
+  contactName    String?
+  contactEmail   String?
+  contactPhone   String?
+  billingAddress String?
+  notes          String?
+  invoiceId      String?  @unique
+  invoice        Invoice? @relation(fields: [invoiceId], references: [id])
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model WorkOrderItem {
+  id            String      @id @default(cuid())
+  workOrderId   String
+  workOrder     WorkOrder   @relation(fields: [workOrderId], references: [id])
+  serviceTypeId String
+  serviceType   ServiceType @relation(fields: [serviceTypeId], references: [id])
+  description   String?
+  quantity      Float       @default(1)
+  unitPrice     Float       @default(0)
+  total         Float       @default(0)
+  addedById     String
+  addedBy       User        @relation(fields: [addedById], references: [id])
+  createdAt     DateTime    @default(now())
+}
+
+model JobForm {
+  id          String    @id @default(cuid())
+  workOrderId String
+  workOrder   WorkOrder @relation(fields: [workOrderId], references: [id])
+  formType    String    // PRE_JOB, POST_JOB, SAFETY, DAMAGE_REPORT, CUSTOM
+  title       String
+  data        String    // JSON blob of form fields
+  submittedById String?
+  submittedBy   User?    @relation(fields: [submittedById], references: [id])
+  submittedAt   DateTime?
+  createdAt     DateTime @default(now())
 }

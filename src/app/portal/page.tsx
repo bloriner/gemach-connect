@@ -1,9 +1,57 @@
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Truck, ArrowRight } from "lucide-react";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Truck, ArrowRight, UserPlus } from "lucide-react";
 
 export default function PortalLandingPage() {
+  const router = useRouter();
+  const [tab, setTab] = useState<"login" | "token">("login");
+
+  // Email login state
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loginError, setLoginError] = useState("");
+  const [loginLoading, setLoginLoading] = useState(false);
+
+  // Token login state
+  const [token, setToken] = useState("");
+
+  const handleEmailLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoginError("");
+    setLoginLoading(true);
+
+    try {
+      const res = await fetch("/api/portal/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Login failed");
+
+      document.cookie = `portal-token=${data.portalToken}; path=/; max-age=86400; SameSite=Lax`;
+      router.push("/portal/dashboard");
+    } catch (err: any) {
+      setLoginError(err.message);
+    } finally {
+      setLoginLoading(false);
+    }
+  };
+
+  const handleTokenLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!token.trim()) return;
+    document.cookie = `portal-token=${token.trim()}; path=/; max-age=86400; SameSite=Lax`;
+    router.push("/portal/dashboard");
+  };
+
   return (
     <div className="flex flex-col items-center justify-center py-16">
       <div className="mb-8 text-center">
@@ -17,31 +65,114 @@ export default function PortalLandingPage() {
       </div>
 
       <Card className="w-full max-w-md">
-        <CardHeader>
-          <h2 className="text-lg font-semibold text-slate-900">Sign In</h2>
-        </CardHeader>
-        <CardContent>
-          <form action="/portal/dashboard" method="GET" className="space-y-4">
-            <div>
-              <label htmlFor="token" className="block text-sm font-medium text-slate-700 mb-1">
-                Portal Access Token
-              </label>
-              <Input
-                id="token"
-                name="token"
-                placeholder="Enter your access token..."
-                required
-                className="font-mono"
-              />
-              <p className="mt-1 text-xs text-slate-400">
-                Your token can be found on any invoice or provided by our office.
+        {/* Tabs */}
+        <div className="flex border-b border-slate-200">
+          <button
+            onClick={() => setTab("login")}
+            className={`flex-1 px-4 py-3 text-sm font-medium transition ${
+              tab === "login"
+                ? "border-b-2 border-brand-600 text-brand-600"
+                : "text-slate-500 hover:text-slate-700"
+            }`}
+          >
+            Email &amp; Password
+          </button>
+          <button
+            onClick={() => setTab("token")}
+            className={`flex-1 px-4 py-3 text-sm font-medium transition ${
+              tab === "token"
+                ? "border-b-2 border-brand-600 text-brand-600"
+                : "text-slate-500 hover:text-slate-700"
+            }`}
+          >
+            Access Token
+          </button>
+        </div>
+
+        <CardContent className="pt-6">
+          {tab === "login" ? (
+            <form onSubmit={handleEmailLogin} className="space-y-4">
+              {loginError && (
+                <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-2.5 text-sm text-red-700">
+                  {loginError}
+                </div>
+              )}
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  Email
+                </label>
+                <Input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@company.com"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  Password
+                </label>
+                <Input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  required
+                />
+              </div>
+
+              <Button type="submit" className="w-full" disabled={loginLoading}>
+                {loginLoading ? "Signing in..." : "Sign In"}
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+
+              <p className="text-center text-sm text-slate-500">
+                Don&apos;t have an account?{" "}
+                <Link href="/portal/signup" className="font-medium text-brand-600 hover:text-brand-700">
+                  Create one
+                </Link>
               </p>
+            </form>
+          ) : (
+            <form onSubmit={handleTokenLogin} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  Portal Access Token
+                </label>
+                <Input
+                  value={token}
+                  onChange={(e) => setToken(e.target.value)}
+                  placeholder="Enter your access token..."
+                  required
+                  className="font-mono"
+                />
+                <p className="mt-1 text-xs text-slate-400">
+                  Your token can be found on any invoice or provided by our office.
+                </p>
+              </div>
+              <Button type="submit" className="w-full">
+                Access Portal
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </form>
+          )}
+
+          {/* Sign up CTA */}
+          <div className="mt-6 rounded-lg bg-brand-50 border border-brand-100 px-4 py-3 flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-brand-900">New customer?</p>
+              <p className="text-xs text-brand-600">Create an account to get started</p>
             </div>
-            <Button type="submit" className="w-full">
-              Access Portal
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-          </form>
+            <Link href="/portal/signup">
+              <Button variant="secondary" size="sm">
+                <UserPlus className="mr-1.5 h-4 w-4" />
+                Sign Up
+              </Button>
+            </Link>
+          </div>
         </CardContent>
       </Card>
 

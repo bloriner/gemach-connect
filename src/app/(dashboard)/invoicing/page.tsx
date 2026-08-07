@@ -1,32 +1,88 @@
+"use client";
+
+import { useEffect, useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { prisma } from "@/lib/prisma";
 import { formatCurrency } from "@/lib/utils";
-import { Plus, FileText, TrendingUp, Clock, AlertTriangle } from "lucide-react";
+import { Plus, FileText, TrendingUp, Clock, AlertTriangle, Loader2, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
 
-export const dynamic = "force-dynamic";
+interface Invoice {
+  id: string;
+  invoiceNumber: string;
+  status: string;
+  total: number;
+  dueDate: string | null;
+  createdAt: string;
+  customer: { companyName: string };
+  workOrder: { serviceType: { name: string } };
+  payments: { amount: number }[];
+}
 
-export default async function InvoicingPage() {
-  const now = new Date();
-  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+interface CompletedOrder {
+  id: string;
+  orderNumber: string;
+  price: number | null;
+  customer: { companyName: string };
+}
 
-  const invoices = await prisma.invoice.findMany({
-    orderBy: { createdAt: "desc" },
-    include: {
-      customer: true,
-      workOrder: { include: { serviceType: true } },
-      payments: true,
-    },
-  });
+export default function InvoicingPage() {
+  const router = useRouter();
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [completedOrders, setCompletedOrders] = useState<CompletedOrder[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [generatingId, setGeneratingId] = useState<string | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
 
-  const completedOrders = await prisma.workOrder.findMany({
-    where: { status: "COMPLETED", invoice: null },
-    include: { customer: true },
-  });
+  const fetchData = useCallback(async () => {
+    try {
+      const [invRes, ordRes] = await Promise.all([
+        fetch("/api/invoice"),
+        fetch("/api/orders?status=COMPLETED"),
+      ]);
+      if (invRes.ok) setInvoices(await invRes.json());
+      if (ordRes.ok) {
+        const data = await ordRes.json();
+        setCompletedOrders(data.filter((o: any) => o.status === "COMPLETED"));
+      }
+    } catch (e) {
+      console.error("Failed to fetch invoicing data", e);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-  // Aggregate stats
+  useEffect(() => { fetchData(); }, [fetchData]);
+
+  function showToast(msg: string) {
+    setToast(msg);
+    setTimeout(() => setToast(null), 3000);
+  }
+
+  async function generateInvoice(orderId: string) {
+    setGeneratingId(orderId);
+    try {
+      const res = await fetch("/api/invoice/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ workOrderId: orderId }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        showToast(err.error ?? "Failed to generate invoice");
+      } else {
+        showToast("Invoice generated successfully!");
+        await fetchData();
+      }
+    } catch (e) {
+      showToast("Network error");
+    } finally {
+      setGeneratingId(null);
+    }
+  }
+
   const totalBilled = invoices
     .filter((i) => i.status !== "CANCELLED")
     .reduce((s, i) => s + i.total, 0);
@@ -49,8 +105,26 @@ export default async function InvoicingPage() {
     return map[status] ?? "default";
   };
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="h-8 w-8 animate-spin text-brand-600" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
+      {/* Toast */}
+      {toast && (
+        <div className="fixed top-4 right-4 z-50 rounded-lg bg-slate-900 px-4 py-3 text-sm text-white shadow-lg animate-in slide-in-from-top-2">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="h-4 w-4 text-green-400" />
+            {toast}
+          </div>
+        </div>
+      )}
+
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Invoicing</h1>
@@ -58,7 +132,7 @@ export default async function InvoicingPage() {
             {invoices.length} invoices — {completedOrders.length} orders ready for invoicing
           </p>
         </div>
-        <Button>
+        <Button onClick={() => router.push("/invoicing")}>
           <Plus className="mr-2 h-4 w-4" />
           New Invoice
         </Button>
@@ -139,9 +213,17 @@ export default async function InvoicingPage() {
                     <span className="text-sm font-medium text-slate-900">
                       ${order.price?.toFixed(2) ?? "—"}
                     </span>
-                    <Button size="sm">
-                      <FileText className="mr-1.5 h-3.5 w-3.5" />
-                      Generate Invoice
+                    <Button
+                      size="sm"
+                      onClick={() => generateInvoice(order.id)}
+                      disabled={generatingId === order.id}
+                    >
+                      {generatingId === order.id ? (
+                        <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <FileText className="mr-1.5 h-3.5 w-3.5" />
+                      )}
+                      {generatingId === order.id ? "Generating..." : "Generate Invoice"}
                     </Button>
                   </div>
                 </div>

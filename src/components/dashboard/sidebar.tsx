@@ -26,11 +26,13 @@ const navigation = [
   {
     section: "Operations",
     items: [
-      { name: "Dashboard", href: "/", icon: LayoutDashboard },
+      { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
       { name: "Orders", href: "/orders", icon: ClipboardList },
+      { name: "Quotes", href: "/quotes", icon: FileText },
       { name: "Calendar", href: "/calendar", icon: Calendar },
       { name: "Technicians", href: "/crews", icon: Users },
       { name: "Field Tracking", href: "/field", icon: MapPin },
+      { name: "Live Tracking", href: "/tracking", icon: MapPin },
     ],
   },
   {
