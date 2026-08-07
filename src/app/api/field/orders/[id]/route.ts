@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { createInvoicesForOrder } from "@/lib/invoice-generator";
 
 export const dynamic = "force-dynamic";
 
@@ -69,6 +70,32 @@ export async function PATCH(
     where: { id: params.id },
     data,
   });
+
+  // ── Auto-generate invoice when completing ──
+  if (status === "COMPLETED") {
+    const orderWithBilling = await prisma.workOrder.findUnique({
+      where: { id: params.id },
+      include: {
+        serviceType: { select: { name: true, basePrice: true } },
+        billingSplits: true,
+        invoice: true,
+      },
+    });
+
+    if (orderWithBilling && !orderWithBilling.invoice) {
+      const invoicePrice = order.price ?? orderWithBilling.serviceType?.basePrice ?? 0;
+      createInvoicesForOrder({
+        workOrderId: order.id,
+        price: invoicePrice,
+        serviceTypeName: orderWithBilling.serviceType?.name ?? "Service",
+        customerId: order.customerId,
+        billingType: (orderWithBilling as any).billingType ?? "SINGLE",
+        billingSplits: orderWithBilling.billingSplits,
+      })
+        .then(() => console.log(`[AUTO-INVOICE] Generated for order ${order.id}`))
+        .catch((err) => console.error(`[AUTO-INVOICE] Failed for order ${order.id}:`, err));
+    }
+  }
 
   return NextResponse.json(order);
 }

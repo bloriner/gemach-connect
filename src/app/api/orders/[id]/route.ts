@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { sendEmail, onMyWayTemplate, jobCompletedTemplate } from "@/lib/email";
+import { createInvoicesForOrder } from "@/lib/invoice-generator";
 
 // GET /api/orders/[id] — full order detail
 export async function GET(
@@ -57,6 +58,8 @@ export async function PATCH(
       crew: { include: { lead: true } },
       property: { select: { address: true } },
       serviceType: { select: { name: true } },
+      billingSplits: true,
+      invoice: true,
     },
   });
 
@@ -129,6 +132,21 @@ export async function PATCH(
         }),
       }).catch((err) => console.error("[EMAIL] Job-completed email failed:", err));
     }
+  }
+
+  // ── Auto-generate invoice when completing ──
+  if (status === "COMPLETED" && !existing.invoice) {
+    const invoicePrice = order.price ?? order.serviceType?.basePrice ?? 0;
+    createInvoicesForOrder({
+      workOrderId: order.id,
+      price: invoicePrice,
+      serviceTypeName: existing.serviceType?.name ?? "Service",
+      customerId: order.customerId,
+      billingType: (existing as any).billingType ?? "SINGLE",
+      billingSplits: existing.billingSplits,
+    })
+      .then(() => console.log(`[AUTO-INVOICE] Generated for order ${order.id}`))
+      .catch((err) => console.error(`[AUTO-INVOICE] Failed for order ${order.id}:`, err));
   }
 
   return NextResponse.json(order);
