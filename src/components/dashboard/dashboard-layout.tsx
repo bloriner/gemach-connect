@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import { useRouter, usePathname } from "next/navigation";
 import { Sidebar } from "./sidebar";
 import { Logo } from "@/components/ui/logo";
+import { NotificationBell } from "@/components/ui/notification-bell";
 import { Menu } from "lucide-react";
 import { isNavAllowed, getDefaultRoute } from "@/lib/roles";
 
@@ -79,11 +80,16 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
           <Menu className="h-6 w-6" />
         </button>
         <Logo iconOnly className="scale-75" />
-        <span className="text-sm font-semibold text-slate-700 truncate">{title}</span>
+        <span className="text-sm font-semibold text-slate-700 truncate flex-1">{title}</span>
+        <NotificationBell />
       </div>
 
       {/* Main content */}
       <main className="flex-1 p-4 sm:p-6 lg:ml-64 lg:p-8">
+        {/* Desktop top bar with bell */}
+        <div className="hidden lg:flex items-center justify-end mb-4">
+          <NotificationBell />
+        </div>
         {children}
       </main>
     </div>

@@ -34,6 +34,8 @@ model User {
   equipmentCheckins  EquipmentCheckout[] @relation("CheckinUser")
   quotes             Quote[]
   addedWorkItems     WorkOrderItem[]
+  notifications      Notification[]
+  activities         OrderActivity[]
 }
 
 model Crew {
@@ -171,6 +173,7 @@ model WorkOrder {
   serviceAgreement   ServiceAgreement? @relation(fields: [serviceAgreementId], references: [id])
   quoteId         String?   @unique
   quote           Quote?    @relation("QuoteOrder", fields: [quoteId], references: [id])
+  activities      OrderActivity[]
 }
 
 model TimeEntry {
@@ -527,4 +530,29 @@ model JobForm {
   submittedBy   User?    @relation(fields: [submittedById], references: [id])
   submittedAt   DateTime?
   createdAt     DateTime @default(now())
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+  type      String   // ORDER_DISPATCHED, ORDER_COMPLETED, INVOICE_GENERATED, PAYMENT_RECEIVED, DOCUMENT_SENT, etc.
+  title     String
+  body      String
+  link      String?  // e.g., /orders/123
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model OrderActivity {
+  id          String    @id @default(cuid())
+  workOrderId String
+  workOrder   WorkOrder @relation(fields: [workOrderId], references: [id])
+  userId      String?
+  user        User?     @relation(fields: [userId], references: [id])
+  action      String    // STATUS_CHANGE, CREW_ASSIGNED, NOTE_ADDED, PRICE_UPDATED, PHOTO_ADDED, etc.
+  detail      String?
+  fromValue   String?
+  toValue     String?
+  createdAt   DateTime  @default(now())
 }

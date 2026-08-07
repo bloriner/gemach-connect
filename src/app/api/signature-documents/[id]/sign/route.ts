@@ -129,8 +129,7 @@ export async function POST(
   // Send notification to sender
   await sendEmail({
     to: doc.sender.email,
-    subject: `Signed: ${doc.title}`,
-    html: documentSignedTemplate({
+    ...documentSignedTemplate({
       senderName: doc.sender.name || "Admin",
       recipientName: signerName,
       documentTitle: doc.title,
@@ -142,8 +141,7 @@ export async function POST(
   // Send confirmation to signer
   await sendEmail({
     to: doc.recipientEmail,
-    subject: `Signed Confirmation: ${doc.title}`,
-    html: signedConfirmationTemplate({
+    ...signedConfirmationTemplate({
       recipientName: signerName,
       documentTitle: doc.title,
     }),

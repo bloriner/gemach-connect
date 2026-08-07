@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { createNotification, createOrderActivity } from "@/lib/notifications";
 
 export const dynamic = "force-dynamic";
 
@@ -86,6 +87,24 @@ export async function POST(request: NextRequest) {
       serviceType: true,
       crew: true,
     },
+  });
+
+  // Log activity
+  const customerName = order.customer?.companyName || "Unknown";
+  createOrderActivity({
+    workOrderId: order.id,
+    userId: (session.user as any).id,
+    action: "CREATED",
+    detail: `Order ${order.orderNumber} created for ${customerName}`,
+  });
+
+  // Notify office staff
+  createNotification({
+    role: "OFFICE_STAFF",
+    type: "ORDER_CREATED",
+    title: "New Order",
+    body: `${order.orderNumber} — ${customerName}`,
+    link: `/orders/${order.id}`,
   });
 
   return NextResponse.json(order, { status: 201 });

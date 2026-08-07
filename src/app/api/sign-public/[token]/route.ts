@@ -78,8 +78,7 @@ export async function GET(
     const { sendEmail, viewedDocumentTemplate } = await import("@/lib/email");
     await sendEmail({
       to: (doc.sender as any).email,
-      subject: `Viewed: ${doc.title}`,
-      html: viewedDocumentTemplate({
+      ...viewedDocumentTemplate({
         senderName: (doc.sender as any).name || "Admin",
         recipientName: doc.recipientName,
         documentTitle: doc.title,

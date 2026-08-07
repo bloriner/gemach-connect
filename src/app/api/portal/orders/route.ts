@@ -104,8 +104,7 @@ export async function POST(request: NextRequest) {
   if (customer.email) {
     sendEmail({
       to: customer.email,
-      subject: `Order Confirmation — ${order.orderNumber}`,
-      html: newOrderCustomerTemplate({
+      ...newOrderCustomerTemplate({
         customerName: customer.contactName || customer.companyName,
         orderNumber: order.orderNumber,
         propertyAddress: property.address,
@@ -123,8 +122,7 @@ export async function POST(request: NextRequest) {
     staff.forEach((user) => {
       sendEmail({
         to: user.email,
-        subject: `New Order — ${order.orderNumber} from ${customer.companyName}`,
-        html: newOrderInternalTemplate({
+        ...newOrderInternalTemplate({
           customerName: customer.companyName,
           orderNumber: order.orderNumber,
           propertyAddress: property.address,

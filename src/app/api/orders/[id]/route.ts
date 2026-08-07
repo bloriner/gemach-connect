@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { sendEmail, onMyWayTemplate, jobCompletedTemplate } from "@/lib/email";
 import { createInvoicesForOrder } from "@/lib/invoice-generator";
+import { createNotification, createOrderActivity } from "@/lib/notifications";
 
 // GET /api/orders/[id] — full order detail
 export async function GET(
@@ -21,6 +22,7 @@ export async function GET(
       items: { include: { serviceType: true } },
       timeEntries: true,
       photos: true,
+      activities: { include: { user: { select: { id: true, name: true } } }, orderBy: { createdAt: "desc" } },
     },
   });
 
@@ -91,6 +93,109 @@ export async function PATCH(
     },
   });
 
+  // ── Activity Logging ──
+  const updaterId = (body as any)._userId || undefined; // can be passed from client
+
+  if (status !== undefined && status !== existing.status) {
+    createOrderActivity({
+      workOrderId: params.id,
+      userId: updaterId,
+      action: "STATUS_CHANGE",
+      detail: `Status changed from ${existing.status.replace("_", " ")} to ${status.replace("_", " ")}`,
+      fromValue: existing.status,
+      toValue: status,
+    });
+
+    // Notify crew when dispatched
+    if (status === "DISPATCHED" && order.crew?.id) {
+      const crewMembers = await prisma.user.findMany({
+        where: { crewId: order.crew.id, active: true },
+        select: { id: true },
+      });
+      createNotification({
+        userIds: crewMembers.map((m) => m.id),
+        type: "ORDER_DISPATCHED",
+        title: "Order Dispatched",
+        body: `${order.orderNumber} — ${order.customer?.companyName || "Unknown"}`,
+        link: `/orders/${order.id}`,
+      });
+    }
+
+    // Notify office when completed
+    if (status === "COMPLETED") {
+      createNotification({
+        role: "OFFICE_STAFF",
+        type: "ORDER_COMPLETED",
+        title: "Order Completed",
+        body: `${order.orderNumber} completed by ${order.crew?.name || "crew"}`,
+        link: `/orders/${order.id}`,
+      });
+    }
+  }
+
+  if (crewId !== undefined && crewId !== existing.crewId) {
+    const oldCrewName = existing.crew?.name || "Unassigned";
+    const newCrewName = order.crew?.name || "Unassigned";
+    createOrderActivity({
+      workOrderId: params.id,
+      userId: updaterId,
+      action: "CREW_ASSIGNED",
+      detail: `Crew changed from ${oldCrewName} to ${newCrewName}`,
+      fromValue: existing.crewId,
+      toValue: crewId || null,
+    });
+
+    // Notify newly assigned crew
+    if (crewId) {
+      const crewMembers = await prisma.user.findMany({
+        where: { crewId, active: true },
+        select: { id: true },
+      });
+      createNotification({
+        userIds: crewMembers.map((m) => m.id),
+        type: "ORDER_DISPATCHED",
+        title: "New Assignment",
+        body: `${order.orderNumber} assigned to ${newCrewName}`,
+        link: `/orders/${order.id}`,
+      });
+    }
+  }
+
+  if (price !== undefined && price !== null && price !== existing.price?.toString()) {
+    createOrderActivity({
+      workOrderId: params.id,
+      userId: updaterId,
+      action: "PRICE_UPDATED",
+      detail: `Price changed from $${existing.price?.toFixed(2) || "0.00"} to $${parseFloat(price).toFixed(2)}`,
+      fromValue: existing.price?.toString() || null,
+      toValue: price,
+    });
+  }
+
+  if (scheduledDate !== undefined) {
+    const newDate = scheduledDate ? new Date(scheduledDate) : null;
+    const oldDate = existing.scheduledDate;
+    if (newDate?.getTime() !== oldDate?.getTime()) {
+      createOrderActivity({
+        workOrderId: params.id,
+        userId: updaterId,
+        action: "SCHEDULE_CHANGED",
+        detail: `Schedule ${oldDate ? "rescheduled" : "set"}`,
+        fromValue: oldDate?.toISOString() || null,
+        toValue: newDate?.toISOString() || null,
+      });
+    }
+  }
+
+  if (notes !== undefined && notes !== (existing.notes || "")) {
+    createOrderActivity({
+      workOrderId: params.id,
+      userId: updaterId,
+      action: "NOTE_ADDED",
+      detail: notes ? "Note updated" : "Note cleared",
+    });
+  }
+
   // ── Status change emails ──
   if (notifyCustomer && existing.customer?.email) {
     const custName = existing.customer.contactName || existing.customer.companyName;
@@ -105,8 +210,7 @@ export async function PATCH(
 
       sendEmail({
         to: existing.customer.email,
-        subject: `Your technician is on the way — ${existing.orderNumber}`,
-        html: onMyWayTemplate({
+        ...onMyWayTemplate({
           customerName: custName,
           technicianName: techName,
           vehicleName: order.crew?.name || "Service Vehicle",
@@ -122,8 +226,7 @@ export async function PATCH(
       const techName = order.crew?.lead?.name || order.crew?.name || "Your technician";
       sendEmail({
         to: existing.customer.email,
-        subject: `Service completed — ${existing.orderNumber}`,
-        html: jobCompletedTemplate({
+        ...jobCompletedTemplate({
           customerName: custName,
           technicianName: techName,
           propertyAddress: addr,

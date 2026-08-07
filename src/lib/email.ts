@@ -1,204 +1,147 @@
-import { Resend } from "resend";
+// Email sending via Resend (resend.com)
+// Set RESEND_API_KEY in .env to enable. Falls back to console.log if not configured.
 
-const resend = process.env.RESEND_API_KEY
-  ? new Resend(process.env.RESEND_API_KEY)
-  : null;
+const RESEND_API_URL = "https://api.resend.com/emails";
+const FROM_EMAIL = "Premier Pro Services <noreply@gemach.app>";
 
-const FROM_EMAIL = process.env.EMAIL_FROM || "Premier Pro Services <noreply@premierproservices.com>";
-
-interface EmailOptions {
-  to: string;
+interface SendEmailParams {
+  to: string | string[];
   subject: string;
   html: string;
-  attachments?: { filename: string; content: Buffer; contentType: string }[];
+  replyTo?: string;
 }
 
-export async function sendEmail(options: EmailOptions): Promise<boolean> {
-  if (!resend) {
-    // No Resend API key — log to console in dev
-    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-    console.log(`[EMAIL] To: ${options.to}`);
-    console.log(`[EMAIL] Subject: ${options.subject}`);
-    console.log(`[EMAIL] Body: ${options.html.substring(0, 200)}...`);
-    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-    return process.env.NODE_ENV === "production" ? false : true;
+export async function sendEmail(params: SendEmailParams): Promise<boolean> {
+  const apiKey = process.env.RESEND_API_KEY;
+
+  if (!apiKey) {
+    console.log(`[EMAIL] (no API key — would send) To: ${params.to}, Subject: ${params.subject}`);
+    return false;
   }
 
   try {
-    await resend.emails.send({
-      from: FROM_EMAIL,
-      to: options.to,
-      subject: options.subject,
-      html: options.html,
-      attachments: options.attachments?.map((a) => ({
-        filename: a.filename,
-        content: a.content,
-      })),
+    const res = await fetch(RESEND_API_URL, {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from: FROM_EMAIL,
+        to: params.to,
+        subject: params.subject,
+        html: params.html,
+        reply_to: params.replyTo,
+      }),
     });
+
+    if (!res.ok) {
+      const err = await res.json();
+      console.error("[EMAIL] Resend error:", err);
+      return false;
+    }
+
+    console.log(`[EMAIL] Sent to ${Array.isArray(params.to) ? params.to.join(", ") : params.to}: ${params.subject}`);
     return true;
-  } catch (error) {
-    console.error("[EMAIL] Send failed:", error);
+  } catch (err) {
+    console.error("[EMAIL] Failed:", err);
     return false;
   }
 }
 
-// ── Email Templates ──────────────────────────────────
+// ── Pre-built Templates ───────────────────────────────
 
-const baseTemplate = (content: string) => `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #1e293b; line-height: 1.6; }
-    .container { max-width: 560px; margin: 0 auto; padding: 40px 24px; }
-    .header { text-align: center; padding-bottom: 24px; border-bottom: 2px solid #2563eb; margin-bottom: 32px; }
-    .header h1 { font-size: 20px; color: #0f172a; margin: 0; }
-    .header .brand { font-size: 13px; color: #2563eb; font-weight: 600; }
-    .content { font-size: 14px; }
-    .content p { margin-bottom: 14px; }
-    .button { display: inline-block; background: #2563eb; color: #fff; padding: 12px 28px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px; margin: 16px 0; }
-    .info-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin: 20px 0; font-size: 13px; }
-    .info-box row { display: flex; justify-content: space-between; padding: 4px 0; }
-    .footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid #e2e8f0; font-size: 11px; color: #94a3b8; text-align: center; }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="header">
-      <div class="brand">Premier Pro Services</div>
-      <h1>HR Document System</h1>
-    </div>
-    ${content}
-    <div class="footer">
-      <p>This is an automated message from Premier Pro Services. Please do not reply to this email.</p>
-    </div>
-  </div>
-</body>
-</html>`;
-
-const baseCustomerTemplate = (content: string) => `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #1e293b; line-height: 1.6; }
-    .container { max-width: 560px; margin: 0 auto; padding: 40px 24px; }
-    .header { text-align: center; padding-bottom: 24px; border-bottom: 2px solid #2563eb; margin-bottom: 32px; }
-    .header h1 { font-size: 20px; color: #0f172a; margin: 0; }
-    .header .brand { font-size: 13px; color: #2563eb; font-weight: 600; }
-    .content { font-size: 14px; }
-    .content p { margin-bottom: 14px; }
-    .button { display: inline-block; background: #2563eb; color: #fff; padding: 12px 28px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px; margin: 16px 0; }
-    .info-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin: 20px 0; font-size: 13px; }
-    .info-box row { display: flex; justify-content: space-between; padding: 4px 0; }
-    .footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid #e2e8f0; font-size: 11px; color: #94a3b8; text-align: center; }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="header">
-      <div class="brand">Premier Pro Services</div>
-      <h1>Service Confirmation</h1>
-    </div>
-    ${content}
-    <div class="footer">
-      <p>This is an automated message from Premier Pro Services. If you have questions, please call our office.</p>
-    </div>
-  </div>
-</body>
-</html>`;
-
-export function sentForSignatureTemplate(params: {
-  recipientName: string;
-  documentTitle: string;
-  signingLink: string;
-  expiresAt?: Date;
+export function orderDispatchedEmail(data: {
+  customerName: string;
+  orderNumber: string;
+  address: string;
+  service: string;
+  scheduledDate: string;
 }) {
-  return baseTemplate(`
-    <div class="content">
-      <p>Dear <strong>${params.recipientName}</strong>,</p>
-      <p>A document is ready for your electronic signature: <strong>${params.documentTitle}</strong></p>
-      <div class="info-box">
-        <row><span>Document:</span><strong>${params.documentTitle}</strong></row>
-        <row><span>From:</span><strong>Premier Pro Services</strong></row>
-        ${params.expiresAt ? `<row><span>Expires:</span><strong>${params.expiresAt.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}</strong></row>` : ""}
+  return {
+    subject: `Your service has been scheduled — ${data.orderNumber}`,
+    html: `
+      <div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:20px;">
+        <h2 style="color:#2563eb;">Premier Pro Services</h2>
+        <p>Hello ${data.customerName},</p>
+        <p>Your service has been scheduled:</p>
+        <table style="border-collapse:collapse;width:100%;margin:16px 0;">
+          <tr><td style="padding:8px;background:#f8fafc;">Order #</td><td style="padding:8px;"><strong>${data.orderNumber}</strong></td></tr>
+          <tr><td style="padding:8px;background:#f8fafc;">Service</td><td style="padding:8px;">${data.service}</td></tr>
+          <tr><td style="padding:8px;background:#f8fafc;">Address</td><td style="padding:8px;">${data.address}</td></tr>
+          <tr><td style="padding:8px;background:#f8fafc;">Date</td><td style="padding:8px;">${data.scheduledDate}</td></tr>
+        </table>
+        <p>We'll notify you when the technician is on the way.</p>
       </div>
-      <p style="text-align:center;">
-        <a href="${params.signingLink}" class="button">Review &amp; Sign Document</a>
-      </p>
-      <p style="font-size:12px; color:#64748b;">This link is unique to you. Do not share it with anyone.</p>
-    </div>
-  `);
+    `,
+  };
 }
 
-export function viewedDocumentTemplate(params: {
-  senderName: string;
-  recipientName: string;
-  documentTitle: string;
-  viewedAt: string;
+export function invoiceReadyEmail(data: {
+  customerName: string;
+  invoiceNumber: string;
+  total: string;
+  dueDate: string;
+  portalLink: string;
 }) {
-  return baseTemplate(`
-    <div class="content">
-      <p>Dear <strong>${params.senderName}</strong>,</p>
-      <p><strong>${params.recipientName}</strong> has viewed the document <strong>${params.documentTitle}</strong> on ${params.viewedAt}.</p>
-      <p>They can now review and sign at their convenience.</p>
-    </div>
-  `);
-}
-
-export function documentSignedTemplate(params: {
-  senderName: string;
-  recipientName: string;
-  documentTitle: string;
-  signedAt: string;
-  signingIp?: string;
-}) {
-  return baseTemplate(`
-    <div class="content">
-      <p>Dear <strong>${params.senderName}</strong>,</p>
-      <p><strong>${params.recipientName}</strong> has signed <strong>${params.documentTitle}</strong>.</p>
-      <div class="info-box">
-        <row><span>Signed at:</span><strong>${params.signedAt}</strong></row>
-        ${params.signingIp ? `<row><span>IP Address:</span><strong>${params.signingIp}</strong></row>` : ""}
+  return {
+    subject: `Invoice ${data.invoiceNumber} — ${data.total}`,
+    html: `
+      <div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:20px;">
+        <h2 style="color:#2563eb;">Premier Pro Services</h2>
+        <p>Hello ${data.customerName},</p>
+        <p>Your invoice is ready:</p>
+        <div style="background:#f8fafc;border-radius:8px;padding:16px;margin:16px 0;">
+          <p style="font-size:24px;font-weight:bold;margin:0;">${data.total}</p>
+          <p style="color:#64748b;margin:4px 0;">Due: ${data.dueDate}</p>
+        </div>
+        <a href="${data.portalLink}" style="display:inline-block;background:#2563eb;color:white;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600;">
+          View & Pay Invoice
+        </a>
       </div>
-      <p>The signed document is now available in the HR dashboard.</p>
-    </div>
-  `);
+    `,
+  };
 }
 
-export function signedConfirmationTemplate(params: {
+export function documentSigningRequestEmail(data: {
+  recipientName: string;
+  documentTitle: string;
+  signLink: string;
+}) {
+  return {
+    subject: `Signature requested: ${data.documentTitle}`,
+    html: `
+      <div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:20px;">
+        <h2 style="color:#2563eb;">Premier Pro Services</h2>
+        <p>Hello ${data.recipientName},</p>
+        <p>You have been invited to sign: <strong>${data.documentTitle}</strong></p>
+        <a href="${data.signLink}" style="display:inline-block;background:#2563eb;color:white;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600;margin-top:12px;">
+          Review & Sign
+        </a>
+        <p style="color:#94a3b8;font-size:12px;margin-top:16px;">This link expires in 30 days.</p>
+      </div>
+    `,
+  };
+}
+
+export function documentSignedConfirmationEmail(data: {
   recipientName: string;
   documentTitle: string;
 }) {
-  return baseTemplate(`
-    <div class="content">
-      <p>Dear <strong>${params.recipientName}</strong>,</p>
-      <p>Thank you! You have successfully signed <strong>${params.documentTitle}</strong>.</p>
-      <p>A copy has been sent to Premier Pro Services. If you have any questions, please contact HR.</p>
-    </div>
-  `);
+  return {
+    subject: `Document signed — ${data.documentTitle}`,
+    html: `
+      <div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:20px;">
+        <h2 style="color:#16a34a;">✓ Document Signed</h2>
+        <p>Hello ${data.recipientName},</p>
+        <p><strong>${data.documentTitle}</strong> has been signed successfully.</p>
+        <p>A copy has been saved. Thank you!</p>
+      </div>
+    `,
+  };
 }
 
-export function declinedDocumentTemplate(params: {
-  senderName: string;
-  recipientName: string;
-  documentTitle: string;
-  declinedAt: string;
-}) {
-  return baseTemplate(`
-    <div class="content">
-      <p>Dear <strong>${params.senderName}</strong>,</p>
-      <p><strong>${params.recipientName}</strong> has <strong>declined</strong> to sign <strong>${params.documentTitle}</strong> on ${params.declinedAt}.</p>
-      <p>Please follow up directly with the recipient.</p>
-    </div>
-  `);
-}
-
-// ── Customer Notifications ──────────────────────────
-
-export function onMyWayTemplate(params: {
+export function onMyWayTemplate(data: {
   customerName: string;
   technicianName: string;
   vehicleName: string;
@@ -206,105 +149,193 @@ export function onMyWayTemplate(params: {
   orderNumber: string;
   estimatedArrival: string;
 }) {
-  return baseCustomerTemplate(`
-    <div class="content">
-      <p>Dear <strong>${params.customerName}</strong>,</p>
-      <p>Great news! <strong>${params.technicianName}</strong> is on the way to your property in <strong>${params.vehicleName}</strong>.</p>
-      <div class="info-box">
-        <row><span>Order:</span><strong>${params.orderNumber}</strong></row>
-        <row><span>Location:</span><strong>${params.propertyAddress}</strong></row>
-        <row><span>ETA:</span><strong>${params.estimatedArrival}</strong></row>
+  return {
+    subject: `Technician on the way — ${data.orderNumber}`,
+    html: `
+      <div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:20px;">
+        <h2 style="color:#2563eb;">🚛 Technician En Route</h2>
+        <p>Hello ${data.customerName},</p>
+        <p><strong>${data.technicianName}</strong> is on the way to ${data.propertyAddress}.</p>
+        <table style="border-collapse:collapse;width:100%;margin:16px 0;">
+          <tr><td style="padding:8px;background:#f8fafc;">Order #</td><td style="padding:8px;"><strong>${data.orderNumber}</strong></td></tr>
+          <tr><td style="padding:8px;background:#f8fafc;">Vehicle</td><td style="padding:8px;">${data.vehicleName}</td></tr>
+          <tr><td style="padding:8px;background:#f8fafc;">ETA</td><td style="padding:8px;">${data.estimatedArrival}</td></tr>
+        </table>
+        <p style="color:#64748b;font-size:13px;">Track your technician in real-time via the customer portal.</p>
       </div>
-      <p>If you need to reach us, please call the office or reply to this email.</p>
-    </div>
-  `);
+    `,
+  };
 }
 
-export function jobCompletedTemplate(params: {
+export function jobCompletedTemplate(data: {
   customerName: string;
   technicianName: string;
   propertyAddress: string;
   orderNumber: string;
   completedAt: string;
 }) {
-  return baseCustomerTemplate(`
-    <div class="content">
-      <p>Dear <strong>${params.customerName}</strong>,</p>
-      <p>Your service at <strong>${params.propertyAddress}</strong> has been completed by <strong>${params.technicianName}</strong>.</p>
-      <div class="info-box">
-        <row><span>Order:</span><strong>${params.orderNumber}</strong></row>
-        <row><span>Completed:</span><strong>${params.completedAt}</strong></row>
+  return {
+    subject: `Service completed — ${data.orderNumber}`,
+    html: `
+      <div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:20px;">
+        <h2 style="color:#16a34a;">✅ Service Complete</h2>
+        <p>Hello ${data.customerName},</p>
+        <p>Your service at <strong>${data.propertyAddress}</strong> has been completed by <strong>${data.technicianName}</strong>.</p>
+        <table style="border-collapse:collapse;width:100%;margin:16px 0;">
+          <tr><td style="padding:8px;background:#f8fafc;">Order #</td><td style="padding:8px;"><strong>${data.orderNumber}</strong></td></tr>
+          <tr><td style="padding:8px;background:#f8fafc;">Completed</td><td style="padding:8px;">${data.completedAt}</td></tr>
+        </table>
+        <p>An invoice will be generated shortly. Thank you for choosing Premier Pro Services!</p>
       </div>
-      <p>An invoice will be sent shortly. Thank you for choosing Premier Pro Services!</p>
-    </div>
-  `);
+    `,
+  };
 }
 
-export function reminderTemplate(params: {
+export function newOrderCustomerTemplate(data: {
+  customerName: string;
+  orderNumber: string;
+  serviceName: string;
+  propertyAddress: string;
+  scheduledDate?: string;
+  portalLink?: string;
+}) {
+  return {
+    subject: `New service order created — ${data.orderNumber}`,
+    html: `
+      <div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:20px;">
+        <h2 style="color:#2563eb;">Premier Pro Services</h2>
+        <p>Hello ${data.customerName},</p>
+        <p>A new service order has been created for you:</p>
+        <table style="border-collapse:collapse;width:100%;margin:16px 0;">
+          <tr><td style="padding:8px;background:#f8fafc;">Order #</td><td style="padding:8px;"><strong>${data.orderNumber}</strong></td></tr>
+          <tr><td style="padding:8px;background:#f8fafc;">Service</td><td style="padding:8px;">${data.serviceName}</td></tr>
+          <tr><td style="padding:8px;background:#f8fafc;">Address</td><td style="padding:8px;">${data.propertyAddress}</td></tr>
+          <tr><td style="padding:8px;background:#f8fafc;">Scheduled</td><td style="padding:8px;">${data.scheduledDate || "Not scheduled"}</td></tr>
+        </table>
+        ${data.portalLink ? `<a href="${data.portalLink}" style="display:inline-block;background:#2563eb;color:white;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600;">View in Customer Portal</a>` : ""}
+      </div>
+    `,
+  };
+}
+
+export function newOrderInternalTemplate(data: {
+  orderNumber: string;
+  customerName: string;
+  serviceName: string;
+  propertyAddress: string;
+  scheduledDate?: string;
+}) {
+  return {
+    subject: `New Order Created — ${data.orderNumber}`,
+    html: `
+      <div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:20px;">
+        <h2 style="color:#2563eb;">📋 New Order</h2>
+        <p>A new work order has been created:</p>
+        <table style="border-collapse:collapse;width:100%;margin:16px 0;">
+          <tr><td style="padding:8px;background:#f8fafc;">Order #</td><td style="padding:8px;"><strong>${data.orderNumber}</strong></td></tr>
+          <tr><td style="padding:8px;background:#f8fafc;">Customer</td><td style="padding:8px;">${data.customerName}</td></tr>
+          <tr><td style="padding:8px;background:#f8fafc;">Service</td><td style="padding:8px;">${data.serviceName}</td></tr>
+          <tr><td style="padding:8px;background:#f8fafc;">Address</td><td style="padding:8px;">${data.propertyAddress}</td></tr>
+          <tr><td style="padding:8px;background:#f8fafc;">Schedule</td><td style="padding:8px;">${data.scheduledDate || "Not scheduled"}</td></tr>
+        </table>
+      </div>
+    `,
+  };
+}
+
+export function reminderTemplate(data: {
   recipientName: string;
   documentTitle: string;
   signingLink: string;
 }) {
-  return baseTemplate(`
-    <div class="content">
-      <p>Dear <strong>${params.recipientName}</strong>,</p>
-      <p>This is a friendly reminder that <strong>${params.documentTitle}</strong> is still awaiting your signature.</p>
-      <p style="text-align:center;">
-        <a href="${params.signingLink}" class="button">Review &amp; Sign Now</a>
-      </p>
-      <p style="font-size:12px; color:#64748b;">If you have already signed this document, please disregard this message.</p>
-    </div>
-  `);
+  return {
+    subject: `Reminder: Signature requested for ${data.documentTitle}`,
+    html: `
+      <div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:20px;">
+        <h2 style="color:#f59e0b;">⏰ Reminder</h2>
+        <p>Hello ${data.recipientName},</p>
+        <p>You still need to sign: <strong>${data.documentTitle}</strong></p>
+        <a href="${data.signingLink}" style="display:inline-block;background:#2563eb;color:white;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600;margin-top:12px;">
+          Review & Sign Now
+        </a>
+      </div>
+    `,
+  };
 }
 
-// ── Order Notifications ─────────────────────────────
-
-export function newOrderCustomerTemplate(params: {
-  customerName: string;
-  orderNumber: string;
-  propertyAddress: string;
-  serviceName: string;
-  scheduledDate?: string;
+export function sentForSignatureTemplate(data: {
+  recipientName: string;
+  documentTitle: string;
+  signingLink: string;
+  expiresAt?: string;
 }) {
-  return baseCustomerTemplate(`
-    <div class="content">
-      <p>Dear <strong>${params.customerName}</strong>,</p>
-      <p>Thank you for placing your service order with Premier Pro Services! We've received your request and our team will review it shortly.</p>
-      <div class="info-box">
-        <row><span>Order:</span><strong>${params.orderNumber}</strong></row>
-        <row><span>Service:</span><strong>${params.serviceName}</strong></row>
-        <row><span>Location:</span><strong>${params.propertyAddress}</strong></row>
-        ${params.scheduledDate ? `<row><span>Requested Date:</span><strong>${params.scheduledDate}</strong></row>` : ""}
+  return {
+    subject: `Signature Request — ${data.documentTitle}`,
+    html: `
+      <div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:20px;">
+        <h2 style="color:#2563eb;">✍️ Signature Request</h2>
+        <p>Hello ${data.recipientName},</p>
+        <p><strong>${data.documentTitle}</strong> has been sent for your signature.</p>
+        <a href="${data.signingLink}" style="display:inline-block;background:#2563eb;color:white;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600;margin-top:12px;">
+          Review & Sign
+        </a>
+        <p style="color:#94a3b8;font-size:12px;margin-top:16px;">${data.expiresAt ? `This link expires ${data.expiresAt}.` : "This link expires in 30 days."}</p>
       </div>
-      <p>We'll contact you to confirm scheduling. You can track your order status anytime in your <a href="https://premier-pro-services.vercel.app/portal">customer portal</a>.</p>
-    </div>
-  `);
+    `,
+  };
 }
 
-export function newOrderInternalTemplate(params: {
-  customerName: string;
-  orderNumber: string;
-  propertyAddress: string;
-  serviceName: string;
-  scheduledDate?: string;
+export function documentSignedTemplate(data: {
+  senderName: string;
+  recipientName: string;
+  documentTitle: string;
+  signedAt: string;
+  signingIp?: string;
 }) {
-  return baseTemplate(`
-    <div class="content">
-      <div class="header" style="padding-bottom:16px; border-bottom:1px solid #e2e8f0; margin-bottom:20px;">
-        <div class="brand">Premier Pro Services</div>
-        <h1>New Order Received</h1>
+  return {
+    subject: `Signed — ${data.documentTitle}`,
+    html: `
+      <div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:20px;">
+        <h2 style="color:#16a34a;">✅ Document Signed</h2>
+        <p>Hello ${data.senderName},</p>
+        <p><strong>${data.recipientName}</strong> signed <strong>${data.documentTitle}</strong> on ${data.signedAt}.</p>
+        <p>The signed document is now available in your records.</p>
       </div>
-      <p>A new service order has been placed via the customer portal.</p>
-      <div class="info-box">
-        <row><span>Order:</span><strong>${params.orderNumber}</strong></row>
-        <row><span>Customer:</span><strong>${params.customerName}</strong></row>
-        <row><span>Service:</span><strong>${params.serviceName}</strong></row>
-        <row><span>Location:</span><strong>${params.propertyAddress}</strong></row>
-        ${params.scheduledDate ? `<row><span>Requested Date:</span><strong>${params.scheduledDate}</strong></row>` : ""}
+    `,
+  };
+}
+
+export function signedConfirmationTemplate(data: {
+  recipientName: string;
+  documentTitle: string;
+}) {
+  return {
+    subject: `Signed Confirmation — ${data.documentTitle}`,
+    html: `
+      <div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:20px;">
+        <h2 style="color:#16a34a;">✅ Signed Confirmation</h2>
+        <p>Hello ${data.recipientName},</p>
+        <p>Thank you for signing <strong>${data.documentTitle}</strong>.</p>
+        <p>A copy has been saved for your records.</p>
       </div>
-      <p style="text-align:center;">
-        <a href="https://premier-pro-services.vercel.app/orders" class="button">View in Dashboard</a>
-      </p>
-    </div>
-  `);
+    `,
+  };
+}
+
+export function viewedDocumentTemplate(data: {
+  senderName: string;
+  recipientName: string;
+  documentTitle: string;
+  viewedAt: string;
+}) {
+  return {
+    subject: `Document Viewed — ${data.documentTitle}`,
+    html: `
+      <div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:20px;">
+        <h2 style="color:#2563eb;">👁️ Document Viewed</h2>
+        <p>Hello ${data.senderName},</p>
+        <p><strong>${data.recipientName}</strong> viewed <strong>${data.documentTitle}</strong> on ${data.viewedAt}.</p>
+      </div>
+    `,
+  };
 }

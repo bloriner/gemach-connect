@@ -43,7 +43,7 @@ export async function POST(
       status: "SENT",
       signToken,
       sentAt: new Date(),
-      expiresAt,
+      expiresAt: expiresAt.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }),
     },
   });
 
@@ -61,12 +61,11 @@ export async function POST(
   // Send email to recipient
   const emailSent = await sendEmail({
     to: doc.recipientEmail,
-    subject: `Signature Request: ${doc.title}`,
-    html: sentForSignatureTemplate({
+    ...sentForSignatureTemplate({
       recipientName: doc.recipientName,
       documentTitle: doc.title,
       signingLink,
-      expiresAt,
+      expiresAt: expiresAt.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }),
     }),
   });
 

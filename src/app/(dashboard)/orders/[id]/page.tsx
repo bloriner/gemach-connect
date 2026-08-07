@@ -54,6 +54,7 @@ interface Order {
   items: { id: string; serviceType: { name: string }; description: string | null; quantity: number; unitPrice: number; total: number }[];
   timeEntries: { id: string; type: string; timestamp: string; user: { name: string } }[];
   photos: { id: string; url: string; type: string; caption: string | null }[];
+  activities: { id: string; action: string; detail: string | null; fromValue: string | null; toValue: string | null; createdAt: string; user: { id: string; name: string } | null }[];
 }
 
 const STATUS_FLOW = ["PENDING", "SCHEDULED", "DISPATCHED", "EN_ROUTE", "ON_SITE", "COMPLETED"] as const;
@@ -445,23 +446,47 @@ export default function OrderDetailPage() {
           </Card>
 
           {/* Timeline */}
-          {order.timeEntries.length > 0 && (
+          {(order.timeEntries.length > 0 || order.activities.length > 0) && (
             <Card>
               <CardContent className="p-5">
                 <h3 className="flex items-center gap-2 text-sm font-semibold text-slate-700 mb-3">
                   <Clock className="h-4 w-4 text-slate-400" /> Activity Timeline
                 </h3>
                 <div className="space-y-3">
-                  {[...order.timeEntries]
+                  {[
+                    ...order.timeEntries.map((te) => ({
+                      id: `te-${te.id}`,
+                      timestamp: te.timestamp,
+                      user: te.user.name,
+                      action: te.type.replace("_", " "),
+                      detail: null,
+                      kind: "time" as const,
+                    })),
+                    ...order.activities.map((a) => ({
+                      id: `act-${a.id}`,
+                      timestamp: a.createdAt,
+                      user: a.user?.name || "System",
+                      action: a.action.replace("_", " "),
+                      detail: a.detail,
+                      kind: "activity" as const,
+                    })),
+                  ]
                     .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-                    .map((te) => (
-                      <div key={te.id} className="flex gap-3 text-sm">
-                        <div className="mt-0.5 h-2 w-2 rounded-full bg-brand-400 flex-shrink-0" />
+                    .map((entry) => (
+                      <div key={entry.id} className="flex gap-3 text-sm">
+                        <div
+                          className={`mt-0.5 h-2 w-2 rounded-full flex-shrink-0 ${
+                            entry.kind === "activity" ? "bg-amber-400" : "bg-brand-400"
+                          }`}
+                        />
                         <div>
                           <p className="text-slate-700">
-                            <strong>{te.user.name}</strong> — {te.type.replace("_", " ")}
+                            <strong>{entry.user}</strong> — {entry.action}
                           </p>
-                          <p className="text-xs text-slate-400">{formatDateTime(te.timestamp)}</p>
+                          {entry.detail && (
+                            <p className="text-xs text-slate-500">{entry.detail}</p>
+                          )}
+                          <p className="text-xs text-slate-400">{formatDateTime(entry.timestamp)}</p>
                         </div>
                       </div>
                     ))}

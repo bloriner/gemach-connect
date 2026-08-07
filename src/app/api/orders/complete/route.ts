@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { createNotification, createOrderActivity } from "@/lib/notifications";
+import { sendEmail, jobCompletedTemplate } from "@/lib/email";
 
 function generateInvoiceNumber(): string {
   const seq = Math.floor(Math.random() * 9000) + 1000;
@@ -136,6 +138,37 @@ export async function POST(request: NextRequest) {
       notes: "Job completed",
     },
   });
+
+  // Activity logging
+  createOrderActivity({
+    workOrderId,
+    userId,
+    action: "COMPLETED",
+    detail: `Order ${order.orderNumber} completed`,
+  });
+
+  // Notify office staff
+  createNotification({
+    role: "OFFICE_STAFF",
+    type: "ORDER_COMPLETED",
+    title: "Order Completed",
+    body: `${order.orderNumber} — ${order.customer.companyName}`,
+    link: `/orders/${workOrderId}`,
+  });
+
+  // Notify customer via email
+  if (order.customer.email) {
+    sendEmail({
+      to: order.customer.email,
+      ...jobCompletedTemplate({
+        customerName: order.customer.contactName || order.customer.companyName,
+        technicianName: (session.user as any).name || "Your technician",
+        propertyAddress: "your property",
+        orderNumber: order.orderNumber,
+        completedAt: new Date().toLocaleString("en-US"),
+      }),
+    }).catch((err) => console.error("[EMAIL] Job-completed failed:", err));
+  }
 
   return NextResponse.json(result, { status: 200 });
 }

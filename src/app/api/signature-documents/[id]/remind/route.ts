@@ -36,8 +36,7 @@ export async function POST(
 
   const emailSent = await sendEmail({
     to: doc.recipientEmail,
-    subject: `Reminder: Please Sign — ${doc.title}`,
-    html: reminderTemplate({
+    ...reminderTemplate({
       recipientName: doc.recipientName,
       documentTitle: doc.title,
       signingLink,

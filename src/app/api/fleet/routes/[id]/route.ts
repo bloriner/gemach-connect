@@ -57,8 +57,7 @@ export async function PATCH(
 
     await sendEmail({
       to: customerEmail,
-      subject: `🚐 ${technicianName} is on the way — ${stop.workOrder.orderNumber}`,
-      html: onMyWayTemplate({
+      ...onMyWayTemplate({
         customerName: stop.workOrder.customer.companyName,
         technicianName,
         vehicleName: stop.vehicle?.name || "service vehicle",
@@ -87,8 +86,7 @@ export async function PATCH(
   if (completed && customerEmail) {
     await sendEmail({
       to: customerEmail,
-      subject: `✅ Service completed — ${stop.workOrder.orderNumber}`,
-      html: jobCompletedTemplate({
+      ...jobCompletedTemplate({
         customerName: stop.workOrder.customer.companyName,
         technicianName,
         propertyAddress: stop.workOrder.property.address,
