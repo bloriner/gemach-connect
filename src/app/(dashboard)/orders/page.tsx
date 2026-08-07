@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -32,6 +33,7 @@ interface ServiceOption {
 }
 
 export default function OrdersPage() {
+  const router = useRouter();
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -314,6 +316,7 @@ export default function OrdersPage() {
               data={orders}
               columns={columns}
               keyField={(o) => o.id}
+              onRowClick={(o) => router.push(`/orders/${o.id}`)}
               emptyMessage="No work orders yet. Create your first order to get started."
               mobileLabel={(o) => (
                 <span className="flex items-center gap-2">

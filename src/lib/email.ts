@@ -1,4 +1,10 @@
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
+
+const resend = process.env.RESEND_API_KEY
+  ? new Resend(process.env.RESEND_API_KEY)
+  : null;
+
+const FROM_EMAIL = process.env.EMAIL_FROM || "Premier Pro Services <noreply@premierproservices.com>";
 
 interface EmailOptions {
   to: string;
@@ -7,52 +13,27 @@ interface EmailOptions {
   attachments?: { filename: string; content: Buffer; contentType: string }[];
 }
 
-function getTransporter() {
-  const host = process.env.SMTP_HOST;
-  const port = process.env.SMTP_PORT;
-  const user = process.env.SMTP_USER;
-  const pass = process.env.SMTP_PASS;
-  const from = process.env.SMTP_FROM || "noreply@premierproservices.com";
-
-  if (!host || !user || !pass) {
-    return null;
-  }
-
-  return {
-    transporter: nodemailer.createTransport({
-      host,
-      port: parseInt(port || "587"),
-      secure: port === "465",
-      auth: { user, pass },
-    }),
-    from,
-  };
-}
-
 export async function sendEmail(options: EmailOptions): Promise<boolean> {
-  const cfg = getTransporter();
-
-  if (!cfg) {
-    // SMTP not configured — log to console in dev
+  if (!resend) {
+    // No Resend API key — log to console in dev
     console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
     console.log(`[EMAIL] To: ${options.to}`);
     console.log(`[EMAIL] Subject: ${options.subject}`);
     console.log(`[EMAIL] Body: ${options.html.substring(0, 200)}...`);
-    if (options.attachments?.length) {
-      console.log(`[EMAIL] Attachments: ${options.attachments.length}`);
-    }
     console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-    // In dev, treat as success so the app works without SMTP
     return process.env.NODE_ENV === "production" ? false : true;
   }
 
   try {
-    await cfg.transporter.sendMail({
-      from: cfg.from,
+    await resend.emails.send({
+      from: FROM_EMAIL,
       to: options.to,
       subject: options.subject,
       html: options.html,
-      attachments: options.attachments,
+      attachments: options.attachments?.map((a) => ({
+        filename: a.filename,
+        content: a.content,
+      })),
     });
     return true;
   } catch (error) {

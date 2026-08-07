@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { prisma } from "@/lib/prisma";
 import { formatCurrency } from "@/lib/utils";
+import Link from "next/link";
 import {
   ClipboardList,
   Users,
@@ -9,17 +10,21 @@ import {
   DollarSign,
   AlertCircle,
   Clock,
+  Hourglass,
 } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
-  const [orderCount, crewCount, completedToday, revenueMonth, recentOrders, activeOrders] =
+  const [orderCount, crewCount, completedToday, pendingCount, revenueMonth, recentOrders, activeOrders] =
     await Promise.all([
       prisma.workOrder.count(),
       prisma.crew.count(),
       prisma.workOrder.count({
         where: { status: "COMPLETED" },
+      }),
+      prisma.workOrder.count({
+        where: { status: { in: ["PENDING"] } },
       }),
       prisma.invoice.aggregate({
         _sum: { total: true },
@@ -48,16 +53,16 @@ export default async function DashboardPage() {
       color: "text-blue-600 bg-blue-100",
     },
     {
+      label: "Pending",
+      value: pendingCount,
+      icon: Hourglass,
+      color: "text-orange-600 bg-orange-100",
+    },
+    {
       label: "Active Crews",
       value: crewCount,
       icon: Users,
       color: "text-green-600 bg-green-100",
-    },
-    {
-      label: "Completed Today",
-      value: completedToday,
-      icon: CheckCircle2,
-      color: "text-purple-600 bg-purple-100",
     },
     {
       label: "Revenue (MTD)",
@@ -118,9 +123,10 @@ export default async function DashboardPage() {
               <p className="text-sm text-slate-500">No orders yet.</p>
             ) : (
               recentOrders.map((order) => (
-                <div
+                <Link
                   key={order.id}
-                  className="flex items-center justify-between border-b border-slate-100 pb-3 last:border-0 last:pb-0"
+                  href={`/orders/${order.id}`}
+                  className="flex items-center justify-between border-b border-slate-100 pb-3 last:border-0 last:pb-0 hover:bg-slate-50 rounded px-2 py-1 -mx-2 transition"
                 >
                   <div>
                     <p className="text-sm font-medium text-slate-900">
@@ -133,7 +139,7 @@ export default async function DashboardPage() {
                   <Badge variant={statusBadgeVariant(order.status)}>
                     {order.status.replace("_", " ")}
                   </Badge>
-                </div>
+                </Link>
               ))
             )}
           </CardContent>
@@ -154,9 +160,10 @@ export default async function DashboardPage() {
               </div>
             ) : (
               activeOrders.map((order) => (
-                <div
+                <Link
                   key={order.id}
-                  className="flex items-center justify-between border-b border-slate-100 pb-3 last:border-0 last:pb-0"
+                  href={`/orders/${order.id}`}
+                  className="flex items-center justify-between border-b border-slate-100 pb-3 last:border-0 last:pb-0 hover:bg-slate-50 rounded px-2 py-1 -mx-2 transition"
                 >
                   <div>
                     <p className="text-sm font-medium text-slate-900">
@@ -171,7 +178,7 @@ export default async function DashboardPage() {
                     <span className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
                     <span className="text-xs text-slate-500">Active</span>
                   </div>
-                </div>
+                </Link>
               ))
             )}
           </CardContent>
