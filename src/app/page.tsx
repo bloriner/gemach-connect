@@ -79,11 +79,6 @@ export default function LoginPage() {
           {/* Stats */}
           <div className="flex items-center gap-6">
             <div className="text-center">
-              <div className="text-2xl font-bold text-brand-400">13</div>
-              <div className="text-xs text-slate-500 mt-0.5">Technicians</div>
-            </div>
-            <div className="w-px h-10 bg-white/10" />
-            <div className="text-center">
               <div className="text-2xl font-bold text-brand-400">500+</div>
               <div className="text-xs text-slate-500 mt-0.5">Properties</div>
             </div>
@@ -91,6 +86,11 @@ export default function LoginPage() {
             <div className="text-center">
               <div className="text-2xl font-bold text-brand-400">24/7</div>
               <div className="text-xs text-slate-500 mt-0.5">Support</div>
+            </div>
+            <div className="w-px h-10 bg-white/10" />
+            <div className="text-center">
+              <div className="text-2xl font-bold text-brand-400">100%</div>
+              <div className="text-xs text-slate-500 mt-0.5">Satisfaction</div>
             </div>
           </div>
           <p className="text-xs text-slate-600">Serving Michigan&apos;s premier commercial properties</p>
