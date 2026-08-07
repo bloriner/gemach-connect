@@ -37,9 +37,9 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-screen">
       {/* Left: Brand Panel */}
-      <div className="hidden w-1/2 bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 lg:flex flex-col justify-between p-12 relative overflow-hidden">
+      <div className="hidden w-1/2 bg-gradient-to-br from-navy-950 via-navy-900 to-navy-950 lg:flex flex-col justify-between p-12 relative overflow-hidden">
         {/* Background pattern */}
-        <div className="absolute inset-0 opacity-[0.03]">
+        <div className="absolute inset-0 opacity-[0.04]">
           <svg width="100%" height="100%">
             <defs>
               <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
@@ -49,26 +49,51 @@ export default function LoginPage() {
             <rect width="100%" height="100%" fill="url(#grid)" />
           </svg>
         </div>
+        {/* Gold accent line at top */}
+        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-brand-400 to-transparent opacity-60" />
 
         <div className="relative">
-          <Logo className="scale-110 origin-left" />
+          <Logo className="scale-110 origin-left" dark />
           <p className="mt-6 max-w-md text-lg text-slate-400 leading-relaxed">
             Commercial real estate field service management. 
-            Carpet, janitorial, and property services — streamlined.
+            Carpet, commercial flooring, restoration, and property services — streamlined.
           </p>
+
+          {/* Services */}
+          <div className="mt-10 grid grid-cols-2 gap-3 max-w-md">
+            {[
+              { icon: "▦", label: "Commercial Carpet" },
+              { icon: "◫", label: "Flooring Installation" },
+              { icon: "↻", label: "Restoration & Repair" },
+              { icon: "⌂", label: "Property Maintenance" },
+            ].map((svc) => (
+              <div key={svc.label} className="flex items-center gap-3 rounded-lg border border-white/10 bg-white/5 px-4 py-3">
+                <span className="text-brand-400 text-lg">{svc.icon}</span>
+                <span className="text-sm text-slate-300">{svc.label}</span>
+              </div>
+            ))}
+          </div>
         </div>
 
         <div className="relative space-y-4">
-          <div className="flex items-center gap-4 text-sm">
-            <div className="flex -space-x-2">
-              {["bg-emerald-500", "bg-blue-500", "bg-amber-500", "bg-purple-500"].map((c, i) => (
-                <div key={i} className={`h-8 w-8 rounded-full ${c} border-2 border-slate-900 flex items-center justify-center text-[10px] font-bold text-white`}>
-                  {["JM", "KL", "TR", "BN"][i]}
-                </div>
-              ))}
+          {/* Stats */}
+          <div className="flex items-center gap-6">
+            <div className="text-center">
+              <div className="text-2xl font-bold text-brand-400">13</div>
+              <div className="text-xs text-slate-500 mt-0.5">Technicians</div>
             </div>
-            <span className="text-slate-500">Trusted by teams across Michigan</span>
+            <div className="w-px h-10 bg-white/10" />
+            <div className="text-center">
+              <div className="text-2xl font-bold text-brand-400">500+</div>
+              <div className="text-xs text-slate-500 mt-0.5">Properties</div>
+            </div>
+            <div className="w-px h-10 bg-white/10" />
+            <div className="text-center">
+              <div className="text-2xl font-bold text-brand-400">24/7</div>
+              <div className="text-xs text-slate-500 mt-0.5">Support</div>
+            </div>
           </div>
+          <p className="text-xs text-slate-600">Serving Michigan&apos;s premier commercial properties</p>
         </div>
       </div>
 
@@ -102,7 +127,7 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="mt-1 block w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
+                className="mt-1 block w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-navy-900 focus:outline-none focus:ring-2 focus:ring-navy-900/20"
                 placeholder="you@company.com"
               />
             </div>
@@ -117,7 +142,7 @@ export default function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="mt-1 block w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20"
+                className="mt-1 block w-full rounded-lg border border-slate-300 px-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-400 focus:border-navy-900 focus:outline-none focus:ring-2 focus:ring-navy-900/20"
                 placeholder="••••••••"
               />
             </div>
@@ -125,7 +150,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-500/50 disabled:opacity-50 transition"
+              className="w-full rounded-lg bg-navy-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-navy-800 focus:outline-none focus:ring-2 focus:ring-brand-400/50 disabled:opacity-50 transition"
             >
               {loading ? "Signing in..." : "Sign In"}
             </button>
@@ -139,7 +164,7 @@ export default function LoginPage() {
           <div className="mt-8 pt-6 border-t border-slate-200 text-center">
             <p className="text-sm text-slate-500">
               Are you a customer?{" "}
-              <a href="/portal" className="font-medium text-brand-600 hover:text-brand-700">
+              <a href="/portal" className="font-medium text-navy-900 hover:text-navy-700">
                 Access the Customer Portal
               </a>
             </p>

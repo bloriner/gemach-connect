@@ -2274,3 +2274,50 @@
 
 # 2026-08-07T17:32:56.758Z
 +y
+
+# 2026-08-07T17:52:15.283Z
++give me a link for the supabase
+
+# 2026-08-07T17:56:29.531Z
++i am confused with the photo policies. it is giving me an option to "get started quickly" or "for full customization"......
+
+# 2026-08-07T17:57:29.282Z
++i'm on the forst one and these are the options:  Back
++Select a template to use for your new policy
++Allow access to JPG images in a public folder to anonymous users
++Give users access to only their own top level folder named as uid
++Give users access to a folder only to authenticated users
++Give access to a nested folder called admin/assets only to a specific user
++Give access to a file to a user
+
+# 2026-08-07T18:01:38.729Z
++ok, next is vercekl? where do i get the key? 
+
+# 2026-08-07T18:03:39.517Z
++i dont see 2 keys. just the api url
+
+# 2026-08-07T18:08:21.577Z
++ok i got the service role key.....now what do i do
+
+# 2026-08-07T18:09:34.943Z
++https://scasvpawjioumxpwffqz.supabase.co     doesnt work
+
+# 2026-08-07T18:10:30.460Z
++i was up to step 4..............Step 4 — Add to Vercel env vars (Settings → Environment Variables):
++
++KEY	VALUE
++SUPABASE_URL	https://scasvpawjioumxpwffqz.supabase.co
++SUPABASE_SERVICE_ROLE_KEY	(your Supabase service_role key from Project Settings → API)
++The service role key is found in your Supabase dashboard under Project Settings → API → service_role secret. Add both env vars to Vercel and redeploy:
++
++npx vercel --prod --yes
++Need anything else?                         what should i do and how do i do this
+
+# 2026-08-07T18:12:34.062Z
++yes redeploy now
+
+# 2026-08-07T18:15:48.436Z
++pich anyone that makes sense. I also want you to change the logo to something nicer add color that will make it look very corporate like and take out "janetorial" on the main landing page and maybe add some other services....also on the bottom i dont like the area that "trusted by teams across michigan"......make that better somehow
+
+# 2026-08-07T18:16:26.007Z
++y
