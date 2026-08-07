@@ -9,6 +9,7 @@ import { PhotoGallery } from "@/components/field/photo-gallery";
 import { ChecklistView } from "@/components/field/checklist-view";
 import { FormRenderer, FORM_TEMPLATES } from "@/components/field/form-renderer";
 import { SignatureSection } from "@/components/field/signature-section";
+import { LocationTracker } from "@/components/tracking/location-tracker";
 import {
   ArrowLeft, MapPin, Clock, Phone, User, Wrench, FileText,
   Camera, CheckCircle2, ClipboardList, PenLine, Plus, Trash2,
@@ -463,6 +464,9 @@ export default function FieldOrderDetailPage() {
           {/* Action buttons */}
           {order.status !== "COMPLETED" && order.status !== "CANCELLED" && (
             <div className="flex flex-col gap-2">
+              {/* GPS / Van Tracking */}
+              <LocationTracker />
+
               {!arrivalMarked && order.status !== "ON_SITE" && (
                 <button
                   onClick={markArrival}
